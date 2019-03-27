@@ -26,6 +26,7 @@ parser = argparse.ArgumentParser(description=' ')
 parser.add_argument('--date', metavar='date_str', type=str, help='date on which the algorithm should be run')
 parser.add_argument('--campaign', type=str, help='coudnet station for which the algorithm should be run')
 args = parser.parse_args()
+print("starting sniffer {} {}".format(args.campaign, args.date))
 
 def unmask(cloudnet_profile):
     
@@ -92,9 +93,9 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
 
     found_clouds.append(clouds.cloud())
     found_clouds[-1].cloud_type=cloud_type
-
+    # go through all features, but with kind of a -d,d sliding window
     for i in range(d,len(detected_features)-d): 
-
+        print(i, "out of", d, len(detected_features)-d)
         #read current feature
         f0=detected_features[i]
 
@@ -104,18 +105,19 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
         for n in range(-d,d):
             if n==0:
                 continue
-		        
+
             f1=detected_features[i+n]
-		
-            v_dist=np.abs(f0.top-f1.top)
+
+            v_dist=np.abs(f0.top_range - f1.top_range)
             h_dist=np.abs(c*(f0.time-f1.time))
-		
+            print('v_dist', v_dist, "h_dist", h_dist, v_threshold, h_threshold)
             if v_dist<v_threshold and h_dist<h_threshold:
-		    
+                print('found feature close to', i, i+n) 
+                # none of the features is assign to a cloud
                 if f0.cloud_system==-1 and f1.cloud_system==-1:
                     f0.cloud_system=cloud_counter
                     f1.cloud_system=cloud_counter
-		        
+
                     found_clouds[cloud_counter].append_feature(f0)
                     found_clouds[cloud_counter].append_feature(f1)
 
@@ -124,10 +126,12 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
                     found_clouds[-1].cloud_type=cloud_type
                     print("new cloud system, total:", cloud_counter, "run:", cloud_type)
 
+                # first feature is assigned to a cloud, second not
                 elif f0.cloud_system!=-1 and f1.cloud_system==-1:
                     f1.cloud_system=f0.cloud_system
                     found_clouds[f1.cloud_system].append_feature(f1)
 
+                # second is assigned to a cloud, first not
                 elif f0.cloud_system==-1 and f1.cloud_system!=-1:
                     f0.cloud_system=f1.cloud_system
                     found_clouds[f0.cloud_system].append_feature(f0)                
@@ -262,12 +266,15 @@ features_in_timestep=[]
 bridge=5 #Possible gap between a liquid cloud base and radar precipitation below [Cloudnet height steps]
 min_tower_height=1000.0 #minimum height of a cloud feature to be classified as part of a cumulus congestus or nimbostratus cloud
 
+
+verbose = False
+
 for i in range(data["cc"]["ts"].shape[0]):
     #i = 2502
     #classfication profile
     profiles = {}
     profiles['cc'] = lT.slice_container(data['cc'], index={'time': [i]})
-    h.pprint(profiles['cc'])
+    #h.pprint(profiles['cc'])
     profiles['IWC'] = lT.slice_container(data['IWC'], index={'time': [i]})
     profiles['LWC_S'] = lT.slice_container(data['LWC_S'], index={'time': [i]})
     profiles['LWC'] = lT.slice_container(data['LWC'], index={'time': [i]})
@@ -286,7 +293,7 @@ for i in range(data["cc"]["ts"].shape[0]):
         profiles['delta'] = lT.slice_container(data['delta'], index={'time': [i]})
 
     if doppler_present:
-        h.pprint(data["v_lidar"])
+        #ih.pprint(data["v_lidar"])
         it_b_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]-15)
         it_e_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]+15)
         if not it_b_dl == it_e_dl:
@@ -325,39 +332,6 @@ for i in range(data["cc"]["ts"].shape[0]):
     # this assignment is possible outside the loop?
     cc_profile = profiles["cc"]['var']
     print('cc_profile', cc_profile)
-    while ih>=0:
-    
-        #Check if cloud particles are present
-        if cc_profile[ih] in clouds.cloud_particles:
-                        
-            feature = clouds.cloud_feature()
-            feature.time = profiles['cc']['ts']
-            
-            #Search for end of coherent feature
-            n=ih-1
-            print("start of feature at ih ", ih,  "n", n)
-            while n>=0:
-                if cc_profile[n] in clouds.cloud_particles:
-                    n-=1
-                    
-                else:             
-                    #bridge vertical gap between liquid cloud bases and ice virgae
-                    if cc_profile[n+1] in clouds.liquid and search(clouds.ice, cc_profile[n-bridge:n]):
-                        print("bridge gap", n, n-bridge, cc_profile[n-bridge:n])
-                        for m in range(1,bridge+1):
-                            if cc_profile[n-m] in clouds.ice:
-                                n-=m
-                                print(m)
-                                continue
-                                
-                    else:
-                        print('feature finished', n, ih)
-                        bounds_imperative.append([n+1,ih])
-                        ih=n
-                        break
-            ih-=1
-        else:
-            ih-=1 
     
     indices_cloud = np.where(np.isin(profiles['cc']['var'], clouds.cloud_particles))[0]
     # 1. option: bridge everything up to 5 bins
@@ -377,26 +351,20 @@ for i in range(data["cc"]["ts"].shape[0]):
 
     # topmost pixels are not considered
     bounds_feature = list(filter(lambda x: x[0] != len(profiles['cc']['rg'])-1, bounds_feature))
-
-    print('bounds from function   ', len(bounds_feature), bounds_feature)
-    print('bounds from imperative ', len(bounds_imperative), sorted(bounds_imperative))
-    print(len(features_in_profile)) 
-    #assert sorted(bounds_imperative) == bounds_feature
-    if not sorted(bounds_imperative) == bounds_feature:
-        print("timestep ", i)
-        input()
+    print('bounds from function   ', len(bounds_feature), bounds_feature) if verbose else None
 
     #populate the feature with data
     features_in_profile = []
     for b in bounds_feature:
-        print(b)
+        #print('bound ', b)
+        b_top = min(b[1]+1, cc_profile.shape[0]-1)
         #populate the feature with data
         feature = clouds.cloud_feature()
         feature.time = profiles['cc']['ts']
-        feature.classifications = cc_profile[b[0]:b[1]+1]
+        feature.classifications = cc_profile[b[0]:b_top]
         feature.base_range = profiles["cc"]["rg"][b[0]]
-        feature.top_range = profiles["cc"]["rg"][b[1]+1]
-        feature.ranges = profiles["cc"]["rg"][b[0]:b[1]+1]
+        feature.top_range = profiles["cc"]["rg"][b_top]
+        feature.ranges = profiles["cc"]["rg"][b[0]:b_top]
                         
         feature.has_melting=search(clouds.melting, feature.classifications)
         feature.has_drizzle=search(clouds.drizzle, feature.classifications)
@@ -406,7 +374,7 @@ for i in range(data["cc"]["ts"].shape[0]):
             keys_to_feature += ["delta"]
 
         for k in keys_to_feature:
-            feature.measurements[k] = lT.slice_container(profiles[k], index={"range": [b[0], b[1]+1]})
+            feature.measurements[k] = lT.slice_container(profiles[k], index={"range": [b[0], b_top]})
 
         def calc_alpha_hogan(datalist):
             T_C = datalist[1]['var']
@@ -434,7 +402,7 @@ for i in range(data["cc"]["ts"].shape[0]):
     #if len(features_in_profile)==0:
     #    continue
     #Classify detected features
-    print("classify features")
+    print("classify features") if verbose else None
     for f in features_in_profile:
         
         #search for the presence of ice crystals and liquid droplets
@@ -447,131 +415,74 @@ for i in range(data["cc"]["ts"].shape[0]):
         if ice_present and not(liquid_present) and not(melting_present):
             
             f.type="pure_ice"
-            type="pure_ice"
             
         elif not(ice_present) and liquid_present:
             
             f.type="pure_liquid"
-            type="pure_liquid"
         
         elif melting_present and ice_present and not(liquid_present):
         
             if f.top_range-f.base_range<min_tower_height:
                 f.type="pure_ice"
-                type="pure_ice"
             else:
                 f.type="tower"
-                type="tower"
             
         # tower not classified when
         # ice and liqud are present, only liquid and melting
         # TODO make tower the last/top question
         elif ice_present and liquid_present:
-            print('ice and liquid present')
+            print('ice and liquid present') if verbose else None
             #
             #search for end of liquid sub-layer
-            print("ice and liquid present")
-            print(f.base_range, f.top_range)
+            print(f.base_range, f.top_range) if verbose else None
             ih=len(f.classifications)-1
             feature_cc = f.classifications.copy()
-            print("ice and liquid", f.classifications)
+            print("ice and liquid", f.classifications) if verbose else None
             f.type = 'mixed-phase'
-            while ih>=0:
-                if f.classifications[ih] in clouds.liquid:
-                
-                    f.liquid_layers+=1
-                    f.liquid_layer_top.append(f.ranges[ih])
-                    
-                    n=ih
-                    while n>=0:
-                        
-                        if n==0:
-                            #liquid sub layer reaches to the bottom of the cloud
-                            f.liquid_layer_base.append(f.ranges[n])
-                            #print("liquid sub layer reaches bottom of cloud", [n])
-                            f.type="liquid-based"
-                            
-                            if f.top-f.liquid_layer_base[-1]<min_tower_height:
-                                f.classifications[f.classifications>0]=1
-                                # what is happening here???
-                                #print('we are overwriting  the classification')
-                                ignore_assert = True
-                            else:
-                                f.type="tower"
-                                
-                            break
-                        
-                        elif (f.classifications[n] in clouds.liquid) and (f.classifications[n-1]==clouds.ice_only):
-                            #transition between mixed-phase and ice-only has been found
-
-                            f.liquid_layer_base.append(f.ranges[n])
-                            print("transition found", n, f.classifications[n-1:n+1])
-                            
-                            if f.top-f.liquid_layer_base[0]<min_tower_height:
-                                print('overwrite base on min tower height')
-                                f.type="mixed-phase"
-                            else:
-                                f.type="tower"
-                           
-                            if f.precipitation_top==-1:
-                                f.precipitation_top=n-1
-
-                            ih=n
-                            break
-                        n-=1
-                
-                ih-=1
     
             # maybe the tower classification is connected to the 
             # overwriting of the classification
             indices_liquid = np.where(np.isin(feature_cc, clouds.liquid))[0]
             bounds_liquid = bounds_of_runs(indices_liquid, maxstepsize=1)
-            print(bounds_liquid)
+            print(bounds_liquid) if verbose else None
 
             if feature_cc[0] in clouds.liquid:
-                type = 'liquid-based'
+                f.type = 'liquid-based'
             #elif feature_cc[0] in clouds.melting:
             #    # should be named melting instead
             #    type = 'liquid-based'
             else:
-                type = 'mixed-phase'
+                f.type = 'mixed-phase'
 
             # other option ice with liquid at top
             # case not covered liquid at base and liquid in between
             indices_ice = np.where(np.isin(feature_cc, clouds.ice_only))[0]
             if np.any(np.isin(indices_liquid, indices_ice+1)) \
                     and feature_cc[-1] in clouds.liquid:
-                print("yeah found transition, overwrite type")
-                type = 'mixed-phase'
+                print("yeah found transition, overwrite type") if verbose else None
+                f.type = 'mixed-phase'
             # and ice above and below liquid?
             # 1 1 1 1 5 4 4 4 4 4 5 5 5 5 4 4 4 4 
             # [1 1 1 1 1 1 1 5 4 4 4 4 5 5 5 5 5 5 5 4 4 4]
+            f.liquid_layers = len(bounds_liquid)
+            print("no liquid", f.liquid_layers) if verbose else None
+            f.liquid_layer_base = [f.ranges[il[0]] for il in bounds_liquid]
+            f.liquid_layer_top = [f.ranges[il[1]] for il in bounds_liquid]
+            print('liquid layer base', f.liquid_layer_base) if verbose else None
+            print('liquid layer top', f.liquid_layer_top) if verbose else None
 
+            # index where ice precipiation starts
+            f.precipitation_top = indices_liquid[0]
+            print('precip_top ', f.precipitation_top) if verbose else None
 
-            print('no liquid', f.liquid_layers)
-            print("liquid layer top ", f.liquid_layer_top)
-            print("liquid layer base ", f.liquid_layer_base)
-            print("=== new props ====================================")
-            no_liquid_layers = len(bounds_liquid)
-            print("no liquid", no_liquid_layers)
-            liquid_layer_base = [f.ranges[il[0]] for il in bounds_liquid]
-            liquid_layer_top = [f.ranges[il[1]] for il in bounds_liquid]
-            print('liquid layer base', liquid_layer_base)
-            print('liquid layer top', liquid_layer_top)
-            print(f.liquid_layer_top[:no_liquid_layers], liquid_layer_top)
-            print(f.liquid_layer_base[:no_liquid_layers], liquid_layer_base)
-            #assert np.all(f.liquid_layer_top[:no_liquid_layers] == liquid_layer_top[::-1])
-            #assert np.all(f.liquid_layer_base[:no_liquid_layers] == liquid_layer_base[::-1])
+            # tower is more important than the categories above
+            if f.top_range-min(f.liquid_layer_base) > min_tower_height:
+                f.type="tower"
+
             #if f.type != 'liquid-based': # for some reason there are as many liquid layers as bins in feature
             #    assert f.liquid_layers == len(bounds_liquid)
-        print("time", i)
-        print('detected type', f.type)
-        print("new type, old type", type, f.type)
-        if not(ignore_assert) and f.type != "liquid-based":
-            assert type == f.type
-        elif type != f.type:
-            print('ignore assert as the classification overwrite is used')
             #input()
+        print("time", i)
 
     #if f.type == 'tower':
     #    input()
@@ -592,12 +503,16 @@ for features_in_profile in features_in_timestep:
         elif f.type=="tower":
             detected_features_tower.append(f)
 
-print("Searching for mixed-phase clouds")
-clouds_mixed=connect_features(detected_features_mixed,h_threshold=4000.0,v_threshold=200.0,cloud_type="mixed-phase")
+print("Searching for layered clouds")
+clouds_mixed=connect_features(detected_features_mixed,h_threshold=4000.0,v_threshold=200.0,cloud_type="layered")
+#clouds_mixed = []
 print("Searching for cirrus (pure ice) clouds")
-clouds_ice=connect_features(detected_features_ice,h_threshold=10000.0,v_threshold=500,cloud_type="ice")
+#
+# 10000 as h_threshold seems a littlebit too much
+clouds_ice=connect_features(detected_features_ice,h_threshold=5000.0,v_threshold=500,cloud_type="ice")
 print("Searching for deep clouds")
 clouds_tower=connect_features(detected_features_tower,h_threshold=5000.0,v_threshold=500.0,cloud_type="tower")
+#clouds_tower = []
 
 all_clouds = clouds_mixed + clouds_ice + clouds_tower
 
@@ -628,7 +543,7 @@ for i, cloud in enumerate(all_clouds):
     
     #if clouds[i].top_variation()<200.0 and clouds[i].time_length()>1800 and clouds[i].cloud_top_thickness()[0]<400.0 and  clouds[i].fill_factor()>0.75:
     #if c_type=="tower":
-    if cloud.time_length()>1800 and cloud.fill_factor()>0.60:
+    if cloud.time_length()>900 and cloud.fill_factor()>0.60:
         cloud_rectangles.append((cg[0],cg[1],cg[2],cg[3],color))
 
 print("Saving")
@@ -641,7 +556,8 @@ for cm in cloud_rectangles:
     begin = h.ts_to_dt(cm[0])
     duration=datetime.timedelta(seconds=cm[2])
     rect = patches.Rectangle(
-            (begin,cm[1]),duration,cm[3],linewidth=2,edgecolor=cm[4],facecolor=cm[4],alpha=0.1)
+            (begin,cm[1]),duration,cm[3],linewidth=2,
+            edgecolor=cm[4],facecolor=cm[4],alpha=0.2)
 
     # Add the patch to the Axes
     ax.add_patch(rect)
