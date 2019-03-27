@@ -206,11 +206,11 @@ class cloud():
 
     def length(self):
         
-        return (self.times[-1] - self.times[0]) * 10.0
+        return (max(self.times) - min(self.times)) * 10.0
     
     def time_length(self):
         
-        return self.times[-1] - self.times[0]
+        return max(self.times) - min(self.times)
     
     def fill_factor(self):
         
@@ -367,7 +367,7 @@ class cloud():
         
         return np.max(base_temps),np.median(top_temps),np.min(top_temps)
 
-    def velocities_radar(self):
+    def velocities_radar_old(self):
 
         v_top=[]
         v_top.append(0)
@@ -437,27 +437,98 @@ class cloud():
 
         return v_mean,v_std,v_n,v_mean_gt0,v_std_gt0,v_n_gt0,width_avg,v_top,z_top
 
+    def velocities_liquid_radar(self, where):
+        """
+        retrun the velocities of the radar at the specified position of the liquid layer
+        ``top``, ``whole``, ``base``
+        """
+
+        v_base=[]
+        locations_of_vel = []
+
+        for f in self.features:
+            if f.valid==False or "v" not in f.measurements.keys() \
+                or len(f.measurements['v']['rg'].shape) == 0:
+                print('no measurements in this feature, valid? ', f.valid)
+                continue
+
+            ll_idx = None
+            if len(f.liquid_layer_base)>0:
+                #print('liquid layer bases',f.liquid_layer_base)
+                #select highest liquid layer
+                if where == 'base':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.liquid_layer_base[-1])
+                elif where == 'top-90':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.liquid_layer_top[-1])-3
+                elif where == 'top':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.liquid_layer_top[-1])
+                elif where == 'whole':
+                    i_base = h.argnearest(f.measurements['v']['rg'], f.liquid_layer_base[-1])
+                    i_top = h.argnearest(f.measurements['v']['rg'], f.liquid_layer_top[-1])
+                    ll_idx = slice(i_base, i_top+1)
+
+            elif f.type=="pure_liquid":
+                if where == 'base':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.base_range)
+                elif where == 'top-90':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.top_range)-3
+                elif where == 'top':
+                    ll_idx = h.argnearest(f.measurements['v']['rg'], f.top_range)
+                elif where == 'whole':
+                    i_base = h.argnearest(f.measurements['v']['rg'], f.base_range)
+                    i_top = h.argnearest(f.measurements['v']['rg'], f.top_range)
+                    ll_idx = slice(i_base, i_top+1)
+
+            #print('velocities', f.measurements.keys())
+            #print('ll_idx', ll_idx, f.type)
+            #print('found indices ', ll_idx, f.liquid_layer_base, f.liquid_layer_top)
+            if ll_idx is not None and len(f.measurements['v']['rg'].shape) > 0:
+                v = f.measurements["v"]
+                #v_lidar['mask'] = np.logical_or(v_lidar['mask'], a_lidar['var']<a_thr)
+                v['mask'] = np.logical_or(v['mask'], v['var']<-990)
+
+                if not np.all(v['mask'][ll_idx]):
+                    v_base.append(v['var'][ll_idx][~v['mask'][ll_idx]].tolist())
+                    locations_of_vel.append((v['ts'], v['rg'][ll_idx]))
+
+        v_base=np.array(h.flatten(v_base))
+        v_base=v_base[v_base!=0]
+
+        if len(v_base)>0:
+            v_mean=np.average(v_base)
+            v_std=np.std(v_base)
+            v_n=len(v_base)
+        else:
+            v_mean=0
+            v_std=0
+            v_n=0
+
+        return v_mean,v_std,v_n,v_base,locations_of_vel
+
 
     def velocities(self):
-        
+        """refactored"""
         a_thr=0
         #a_thr=8e4
 
         v_base=[]
         v_base.append(0)
+        locations_of_vel = []
 
         for f in self.features:
-
             if f.valid==False or "v_lidar" not in f.measurements.keys():
+                print('no measurements in this feature, valid? ', f.valid)
                 continue
 
             ll_base=-1
             if len(f.liquid_layer_base)>0:
-                ll_base=f.liquid_layer_base[0]
-            elif f.type=="pure liquid":
+                #select highest liquid layer
+                ll_base=f.liquid_layer_base[-1]
+            elif f.type=="pure_liquid":
                 ll_base=f.base_range
             #print('velocities', f.measurements.keys())
-
+            #print('ll_base', ll_base, f.type)
+            
             if ll_base>=0 and len(f.measurements["v_lidar"])>0:
                 v_lidar = f.measurements["v_lidar"]
                 a_lidar = f.measurements["a_lidar"]
@@ -476,10 +547,11 @@ class cloud():
                     #print(it, idx, mx_ind+idx)
                     if not v_lidar['mask'][it, mx_ind+idx]:
                         v_base.append(v_lidar['var'][it, mx_ind+idx])
+                    #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
+                    locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx]))
                 
         v_base=np.array(v_base)
         v_base=v_base[v_base!=0]
-        v_base_gt0=v_base[v_base>0.0]
 
         if len(v_base)>0:
             v_mean=np.average(v_base)
@@ -490,16 +562,9 @@ class cloud():
             v_std=0
             v_n=0
 
-        if len(v_base_gt0)>0:
-            v_mean_gt0=np.average(v_base_gt0)
-            v_std_gt0=np.std(v_base_gt0)
-            v_n_gt0=len(v_base_gt0)
-        else:
-            v_mean_gt0=0
-            v_std_gt0=0
-            v_n_gt0=0
+        return v_mean,v_std,v_n,v_base,locations_of_vel
 
-        return v_mean,v_std,v_n,v_mean_gt0,v_std_gt0,v_n_gt0,v_base
+
 
     def horizontal_wind(self, cth, h_range):
 

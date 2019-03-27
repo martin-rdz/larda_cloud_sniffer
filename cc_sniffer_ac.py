@@ -15,18 +15,12 @@ import pyLARDA
 import pyLARDA.Transformations as lT
 import pyLARDA.helpers as h
 
-import logging
-log = logging.getLogger('pyLARDA')
-#log.setLevel(logging.DEBUG)
-#log.setLevel(logging.INFO)
-log.setLevel(logging.WARNING)
-log.addHandler(logging.StreamHandler())
-
-parser = argparse.ArgumentParser(description=' ')
-parser.add_argument('--date', metavar='date_str', type=str, help='date on which the algorithm should be run')
-parser.add_argument('--campaign', type=str, help='coudnet station for which the algorithm should be run')
-args = parser.parse_args()
-print("starting sniffer {} {}".format(args.campaign, args.date))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=' ')
+    parser.add_argument('--date', metavar='date_str', type=str, help='date on which the algorithm should be run')
+    parser.add_argument('--campaign', type=str, help='coudnet station for which the algorithm should be run')
+    args = parser.parse_args()
+    print("starting sniffer {} {}".format(args.campaign, args.date))
 
 def unmask(cloudnet_profile):
     
@@ -62,11 +56,10 @@ def bounds_of_runs(array, maxstepsize=1):
 
 
 def search(elements,target):
-
     hit=[]
     for e in np.ravel(elements):
         hit.append(np.any(e in target))
-    print('elements, target, hit', elements, target, hit)
+    #print('elements, target, hit', elements, target, hit)
     return np.any(hit)
 
 def save_object(dump_object,filename):
@@ -136,208 +129,45 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
                     f0.cloud_system=f1.cloud_system
                     found_clouds[f0.cloud_system].append_feature(f0)                
 
+    # remove empty clouds
+    found_clouds = list(filter(lambda x: x.begin_time != -1 and x.end_time != -1, found_clouds))
     return found_clouds
 
 
 
-campaign=args.campaign
-build_lists=True 
-larda = pyLARDA.LARDA().connect(campaign, build_lists=build_lists)
+def find_features_in_profile(profiles, keys_to_feature, verbose=False):
+    """ 
+    
+    Args:
+        profiles (dict): range slices of data, cc with classification flag is required
+        keys_to_features (list): keys that are added to features
+        verbose (optional, bool): verbose print output
+    
+    """
 
-print(larda.camp.info_dict)
-station_altitude=larda.camp.info_dict["altitude"]
+    min_tower_height=1000.0 #minimum height of a cloud feature to be classified as part of a cumulus congestus or nimbostratus cloud
 
-#hand over date
-begin_dt=datetime.datetime.strptime(args.date, "%Y%m%d")
-end_dt=begin_dt + datetime.timedelta(hours=23, minutes=59, seconds=59)
-time_interval = [begin_dt, end_dt]
-
-for i in range(0,11):
-    print(i, translate_bit(i))
-
-#advanced datasets
-lidar_present=False
-doppler_present=False
-windprofiler_present=False
-corrected_tfv_present=False
-
-
-var_shortcuts = {"cc": "CLASS", "LWC_S": "LWC_S", "LWC": "LWC",
-        "IWC": "IWC",
-        "Z":"Z", "v": "VEL", "uwind":"UWIND", "vwind":"VWIND",
-        "T": "T", "p": "P", "beta": "beta", "width": "WIDTH"}
-
-data = {k:larda.read("CLOUDNET", v, time_interval, [0, 'max']) for k,v in var_shortcuts.items()}
-
-
-def calc_snr(data):
-    var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
-    return var, data['mask']
-data["SNR"] = lT.combine(calc_snr, data['Z'], {'name': "SNR"})
-#h.pprint(data["SNR"], verbose=True)
-
-try:
-    data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
-    def calc_LDR_thres(data):
-        snr_co = -20.
-        ldr_limit = -33
-        var = snr_co-data["var"]
-        mask = data["mask"]
-        return var, mask
-
-    data["LDR_thr"] = lT.combine(calc_LDR_thres, data["SNR"], {})
-    data["LDR"]["mask"] = np.logical_or(data["LDR"]["mask"], h.lin2z(data["LDR"]["var"])<-33)
-    data["LDR"]["mask"] = np.logical_or(data["LDR"]["mask"], h.lin2z(data["LDR"]["var"])<data["LDR_thr"]["var"])
-
-except Exception as e:
-    print("No Radar depol found")
-    #create an empty depol dataset
-    data['LDR']=copy.deepcopy(data["Z"])
-    data['LDR']['var'][:]=-999
-    data['LDR']['mask'][:]=True
-    data['LDR_thr']=copy.deepcopy(data["LDR"])
-
-data["T"] = lT.interpolate2d(data["T"], new_range=data["Z"]["rg"])
-data["p"] = lT.interpolate2d(data["p"], new_range=data["Z"]["rg"])
-data["uwind"] = lT.interpolate2d(data["uwind"], new_range=data["Z"]["rg"])
-data["vwind"] = lT.interpolate2d(data["vwind"], new_range=data["Z"]["rg"])
-
-
-try:
-    data["delta"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
-    lidar_present=True
-except Exception as e:
-    print("Error:", e)
-    print("No lidar data found, continue with lidar_present=False")
-
-#try:
-#    v_lidar=larda.read("DL_Velocity",begin,end)
-#    a_lidar=larda.read("DL_Amplitude",begin,end)
-#
-#    #v_lidar.abs_reference(a_lidar, 0.1e9)
-#    
-#    doppler_present=True
-#
-#except Exception as e:
-#    print("Error:", e)
-#    print("No WiLi data found, continue with doppler_present=False")
-
-try:
-    data["v_lidar"] = larda.read("SHAUN","VEL",time_interval, [0,'max'])
-    data["a_lidar"] = larda.read("SHAUN","beta_raw",time_interval, [0,'max'])
-    #v_lidar.abs_reference(a_lidar, 0.1e9)
-    doppler_present=True
-except Exception as e:
-    print("Error:", e)
-    print("No SHAUN data found, continue with doppler_present=False")
-
-#try:
-#    wp_vel=larda.read("WIPRO_ADV",begin-3600,end+3600)
-#    wp_dir=larda.read("WIPRO_DIR",begin-3600,end+3600)
-#
-#    windprofiler_present=True
-#
-#except Exception as e:
-#    print("Error:", e)
-#    print("No Wind Profiler found, continue with windprofiler_present=False")
-#
-#try:
-#
-#    tfv=larda.read("CLOUDNET_TFV",begin,end)
-#    vair=larda.read("CLOUDNET_VAIR",begin,end)
-#    
-#    #TODO: noise cut in original wind profiler converted files
-#
-#    tfv.data[tfv.data<-6.0]=-999
-#    tfv.data[tfv.data>6.0]=-999
-#
-#    vair.data[vair.data<-6.0]=-999
-#    vair.data[vair.data>6.0]=-999
-#
-#    corrected_tfv_present=True
-#
-#except Exception as e:
-#    print("Error:", e)
-#    print("No terminal fall velocity and air velocity information found")
-
-
-features_in_timestep=[]
-
-bridge=5 #Possible gap between a liquid cloud base and radar precipitation below [Cloudnet height steps]
-min_tower_height=1000.0 #minimum height of a cloud feature to be classified as part of a cumulus congestus or nimbostratus cloud
-
-
-verbose = False
-
-for i in range(data["cc"]["ts"].shape[0]):
-    #i = 2502
     #classfication profile
-    profiles = {}
-    profiles['cc'] = lT.slice_container(data['cc'], index={'time': [i]})
-    #h.pprint(profiles['cc'])
-    profiles['IWC'] = lT.slice_container(data['IWC'], index={'time': [i]})
-    profiles['LWC_S'] = lT.slice_container(data['LWC_S'], index={'time': [i]})
-    profiles['LWC'] = lT.slice_container(data['LWC'], index={'time': [i]})
-    profiles['Z'] = lT.slice_container(data['Z'], index={'time': [i]})
-    profiles['SNR'] = lT.slice_container(data['SNR'], index={'time': [i]})
-    profiles['LDR'] = lT.slice_container(data['LDR'], index={'time': [i]})
-    profiles['LDR_thr'] = lT.slice_container(data['LDR_thr'], index={'time': [i]})
-    profiles['v'] = lT.slice_container(data['v'], index={'time': [i]})
-    profiles['width'] = lT.slice_container(data['width'], index={'time': [i]})
-    profiles['beta'] = lT.slice_container(data['beta'], index={'time': [i]})
-   
+
     #if ~np.any(cc_profile==1) and ~np.any(cc_profile==3):
     #    continue
 
-    if lidar_present:
-        profiles['delta'] = lT.slice_container(data['delta'], index={'time': [i]})
-
-    if doppler_present:
-        #ih.pprint(data["v_lidar"])
-        it_b_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]-15)
-        it_e_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]+15)
-        if not it_b_dl == it_e_dl:
-            print("no doppler lidar for this profile", i)
-            profiles['v_lidar'] = lT.slice_container(data['v_lidar'], 
-                    index={'time': [it_b_dl, it_e_dl]})
-            profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
-                    index={'time': [it_b_dl, it_e_dl]})
-
-#    if windprofiler_present:
-#        wp_timebin=wp_vel.get_time_bin(Z.times[i])
-#    
-#    if corrected_tfv_present:
-#        tfv_bin=tfv.get_time_bin(v.times[i])
-#        if tfv.times[tfv_bin]-v.times[i]>75.0:
-#            tfv_profile=copy.deepcopy(v.data[i])
-#            tfv_profile[:]=0
-#            vair_profile=copy.deepcopy(v.data[i])
-#            vair_profile[:]=0
-#        else:
-#            tfv_profile=unmask(tfv.data[tfv_bin])
-#            vair_profile=unmask(vair.data[tfv_bin])
-#
-
-    profiles['T'] = lT.slice_container(data['T'], index={'time': [i]})
-    profiles['p'] = lT.slice_container(data['p'], index={'time': [i]})
-    profiles['uwind'] = lT.slice_container(data['uwind'], index={'time': [i]})
-    profiles['vwind'] = lT.slice_container(data['vwind'], index={'time': [i]})
-
     features_in_profile=[]
-    bounds_imperative = []
     #print cc_profile
-    print("Time:",i)
-    ih = len(profiles["cc"]['rg']) - 2
+    #ih = len(profiles["cc"]['rg']) - 2
 
     # this assignment is possible outside the loop?
     cc_profile = profiles["cc"]['var']
     print('cc_profile', cc_profile)
     
     indices_cloud = np.where(np.isin(profiles['cc']['var'], clouds.cloud_particles))[0]
+    # original comment: Possible gap between a liquid cloud base and radar precipitation below [Cloudnet height steps]
     # 1. option: bridge everything up to 5 bins
     bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=5)
     # 2. option: bridge up to 5 bins only if top is liquid
     bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=1)
+    # 3. option: combine both
+    bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=3)
     merge_after = []
     # find bounds that fulfill the cond and save the index
     for i, [lower, upper] in enumerate(zip(bounds_feature, bounds_feature[1::])):
@@ -356,7 +186,7 @@ for i in range(data["cc"]["ts"].shape[0]):
     #populate the feature with data
     features_in_profile = []
     for b in bounds_feature:
-        #print('bound ', b)
+        print('bound ', b)
         b_top = min(b[1]+1, cc_profile.shape[0]-1)
         #populate the feature with data
         feature = clouds.cloud_feature()
@@ -368,10 +198,6 @@ for i in range(data["cc"]["ts"].shape[0]):
                         
         feature.has_melting=search(clouds.melting, feature.classifications)
         feature.has_drizzle=search(clouds.drizzle, feature.classifications)
-        keys_to_feature = ["IWC", "LWC_S", "LWC", "Z", "v", "width", "T", "p", "SNR",
-                "uwind", "vwind", "beta", "LDR"]
-        if lidar_present:
-            keys_to_feature += ["delta"]
 
         for k in keys_to_feature:
             feature.measurements[k] = lT.slice_container(profiles[k], index={"range": [b[0], b_top]})
@@ -382,9 +208,10 @@ for i in range(data["cc"]["ts"].shape[0]):
             var = 10**(0.000477*Zdb*T_C + 0.0683*Zdb - 0.0171*T_C - 3.11)
             mask = np.logical_or(datalist[0]["mask"], datalist[1]["mask"])
             return var, mask
-        feature.measurements[k] = lT.combine(calc_alpha_hogan, 
-                [feature.measurements['Z'], feature.measurements["T"]], 
-                {'name': "alpha_hogan"})
+        if 'Z' in profiles:
+            feature.measurements[k] = lT.combine(calc_alpha_hogan, 
+                    [feature.measurements['Z'], feature.measurements["T"]], 
+                    {'name': "alpha_hogan"})
 
         if "v_lidar" in profiles:
             ir_b_dl = h.argnearest(profiles["v_lidar"]["rg"], feature.base_range)
@@ -435,7 +262,7 @@ for i in range(data["cc"]["ts"].shape[0]):
             #
             #search for end of liquid sub-layer
             print(f.base_range, f.top_range) if verbose else None
-            ih=len(f.classifications)-1
+            #ih=len(f.classifications)-1
             feature_cc = f.classifications.copy()
             print("ice and liquid", f.classifications) if verbose else None
             f.type = 'mixed-phase'
@@ -482,91 +309,265 @@ for i in range(data["cc"]["ts"].shape[0]):
             #if f.type != 'liquid-based': # for some reason there are as many liquid layers as bins in feature
             #    assert f.liquid_layers == len(bounds_liquid)
             #input()
-        print("time", i)
+        print('final classification', f.type)
 
     #if f.type == 'tower':
     #    input()
-    features_in_timestep.append(features_in_profile)
+    return features_in_profile
 
 
-#extract mixed-phase features and put them in linear array
-detected_features_mixed=[]
-detected_features_ice=[]
-detected_features_tower=[]
+if __name__ == "__main__":
+    import logging
+    log = logging.getLogger('pyLARDA')
+    #log.setLevel(logging.DEBUG)
+    #log.setLevel(logging.INFO)
+    log.setLevel(logging.WARNING)
+    log.addHandler(logging.StreamHandler())
 
-for features_in_profile in features_in_timestep:
-    for f in features_in_profile:
-        if f.type=="mixed-phase" or f.type=="liquid-based" or f.type=="pure_liquid":
-            detected_features_mixed.append(f)
-        elif f.type=="pure_ice":
-            detected_features_ice.append(f)
-        elif f.type=="tower":
-            detected_features_tower.append(f)
+    campaign=args.campaign
+    build_lists=True 
+    larda = pyLARDA.LARDA().connect(campaign, build_lists=build_lists)
 
-print("Searching for layered clouds")
-clouds_mixed=connect_features(detected_features_mixed,h_threshold=4000.0,v_threshold=200.0,cloud_type="layered")
-#clouds_mixed = []
-print("Searching for cirrus (pure ice) clouds")
-#
-# 10000 as h_threshold seems a littlebit too much
-clouds_ice=connect_features(detected_features_ice,h_threshold=5000.0,v_threshold=500,cloud_type="ice")
-print("Searching for deep clouds")
-clouds_tower=connect_features(detected_features_tower,h_threshold=5000.0,v_threshold=500.0,cloud_type="tower")
-#clouds_tower = []
+    print(larda.camp.info_dict)
 
-all_clouds = clouds_mixed + clouds_ice + clouds_tower
+    #hand over date
+    begin_dt=datetime.datetime.strptime(args.date, "%Y%m%d")
+    end_dt=begin_dt + datetime.timedelta(hours=23, minutes=59, seconds=59)
+    time_interval = [begin_dt, end_dt]
 
-cloud_rectangles=[]
-for i, cloud in enumerate(all_clouds):
-    
-    if all_clouds[i].n_profiles()==0:
-        continue
-    
-    c_type=cloud.most_common_type()
-    print("cloud type ", cloud.cloud_type)
-    print("len of feature", len(cloud.features))
-    #clouds[i].type=c_type
-    if c_type=="pure_liquid":
-        color='blue'
-    elif c_type=="pure_ice":
-        color='green'
-    elif c_type=="liquid-based":
-        color='blue'
-    elif c_type=="mixed-phase":
-        color='red'
-    elif c_type=="tower":
-        color="black"
-    else:
-        color='gray'
-    
-    cg = cloud.geometry()
-    
-    #if clouds[i].top_variation()<200.0 and clouds[i].time_length()>1800 and clouds[i].cloud_top_thickness()[0]<400.0 and  clouds[i].fill_factor()>0.75:
-    #if c_type=="tower":
-    if cloud.time_length()>900 and cloud.fill_factor()>0.60:
-        cloud_rectangles.append((cg[0],cg[1],cg[2],cg[3],color))
+    for i in range(0,11):
+        print(i, translate_bit(i))
 
-print("Saving")
-save_object(all_clouds,'../cloud_properties/cloud_properties_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_clouds.dat')
+    #advanced datasets
+    lidar_present=False
+    doppler_present=False
+    windprofiler_present=False
+    corrected_tfv_present=False
 
-fig, ax = lT.plot_timeheight(data['cc'], range_interval=[0, 12000])
-import matplotlib.patches as patches
-for cm in cloud_rectangles:
-    print(cm)
-    begin = h.ts_to_dt(cm[0])
-    duration=datetime.timedelta(seconds=cm[2])
-    rect = patches.Rectangle(
-            (begin,cm[1]),duration,cm[3],linewidth=2,
-            edgecolor=cm[4],facecolor=cm[4],alpha=0.2)
+    var_shortcuts = {"cc": "CLASS", "LWC_S": "LWC_S", "LWC": "LWC",
+            "IWC": "IWC",
+            "Z":"Z", "v": "VEL", "uwind":"UWIND", "vwind":"VWIND",
+            "T": "T", "p": "P", "beta": "beta", "width": "WIDTH"}
 
-    # Add the patch to the Axes
-    ax.add_patch(rect)
+    data = {k:larda.read("CLOUDNET", v, time_interval, [0, 'max']) for k,v in var_shortcuts.items()}
 
-savename='../plots/cloud_overview_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_cloud_detection.png'
-fig.savefig(savename, dpi=250)
+    def calc_snr(data):
+        var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
+        return var, data['mask']
+    data["SNR"] = lT.combine(calc_snr, data['Z'], {'name': "SNR"})
+
+    try:
+        data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
+        def calc_Zcx(data):
+            Z = data[0]
+            LDR = data[1]
+            var = Z['var']*LDR['var']
+            mask = np.logical_or(Z['mask'], LDR['mask'])
+            return var, mask
+        data['Zcx'] = Transf.combine(calc_Zcx, [data['Z'], data['LDR']], {'name': "Zcx", 'var_lims': [-47,-20]})
+
+        new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-40), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-33)))
+        data['LDRcorr'] = {**data['LDR']}
+        data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
+
+    except Exception as e:
+        print("No Radar depol found")
+        #create an empty depol dataset
+        data['LDR']=copy.deepcopy(data["Z"])
+        data['LDR']['var'][:]=-999
+        data['LDR']['mask'][:]=True
+        data['LDRcorr']=copy.deepcopy(data["LDR"])
+
+    # interpolate the model data
+    data["T"] = lT.interpolate2d(data["T"], new_range=data["Z"]["rg"])
+    data["p"] = lT.interpolate2d(data["p"], new_range=data["Z"]["rg"])
+    data["uwind"] = lT.interpolate2d(data["uwind"], new_range=data["Z"]["rg"])
+    data["vwind"] = lT.interpolate2d(data["vwind"], new_range=data["Z"]["rg"])
 
 
-#cc is here the larda object with cc
-#cc.plot(begin_dt,end_dt,0,12000,savename='../plots/cloud_overview_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_cloud_detection.png',cloud_marks=cloud_rectangles)
-#cc.plot(begin,end,0,12000,savename='cloud_overview_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_cloud_detection.png')
+    try:
+        data["delta"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
+        lidar_present=True
+    except Exception as e:
+        print("Error:", e)
+        print("No lidar data found, continue with lidar_present=False")
+
+    try:
+        data["v_lidar"] = larda.read("SHAUN","VEL",time_interval, [0,'max'])
+        data["a_lidar"] = larda.read("SHAUN","beta_raw",time_interval, [0,'max'])
+        #v_lidar.abs_reference(a_lidar, 0.1e9)
+        doppler_present=True
+    except Exception as e:
+        print("Error:", e)
+        print("No SHAUN data found, continue with doppler_present=False")
+
+    #try:
+    #    wp_vel=larda.read("WIPRO_ADV",begin-3600,end+3600)
+    #    wp_dir=larda.read("WIPRO_DIR",begin-3600,end+3600)
+    #
+    #    windprofiler_present=True
+    #
+    #except Exception as e:
+    #    print("Error:", e)
+    #    print("No Wind Profiler found, continue with windprofiler_present=False")
+    #
+    #try:
+    #
+    #    tfv=larda.read("CLOUDNET_TFV",begin,end)
+    #    vair=larda.read("CLOUDNET_VAIR",begin,end)
+    #    
+    #    #TODO: noise cut in original wind profiler converted files
+    #
+    #    tfv.data[tfv.data<-6.0]=-999
+    #    tfv.data[tfv.data>6.0]=-999
+    #
+    #    vair.data[vair.data<-6.0]=-999
+    #    vair.data[vair.data>6.0]=-999
+    #
+    #    corrected_tfv_present=True
+    #
+    #except Exception as e:
+    #    print("Error:", e)
+    #    print("No terminal fall velocity and air velocity information found")
+
+    verbose = False
+
+    features_in_timestep=[]
+    for i in range(data["cc"]["ts"].shape[0]):
+        
+        print("Time:",i)
+        profiles = {}
+        profiles['cc'] = lT.slice_container(data['cc'], index={'time': [i]})
+        #h.pprint(profiles['cc'])
+        profiles['IWC'] = lT.slice_container(data['IWC'], index={'time': [i]})
+        profiles['LWC_S'] = lT.slice_container(data['LWC_S'], index={'time': [i]})
+        profiles['LWC'] = lT.slice_container(data['LWC'], index={'time': [i]})
+        profiles['Z'] = lT.slice_container(data['Z'], index={'time': [i]})
+        profiles['SNR'] = lT.slice_container(data['SNR'], index={'time': [i]})
+        profiles['LDR'] = lT.slice_container(data['LDR'], index={'time': [i]})
+        profiles['LDRcorr'] = lT.slice_container(data['LDRcorr'], index={'time': [i]})
+        profiles['v'] = lT.slice_container(data['v'], index={'time': [i]})
+        profiles['width'] = lT.slice_container(data['width'], index={'time': [i]})
+        profiles['beta'] = lT.slice_container(data['beta'], index={'time': [i]})
+        
+        if lidar_present:
+            profiles['delta'] = lT.slice_container(data['delta'], index={'time': [i]})
+
+        if doppler_present:
+            it_b_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]-15)
+            it_e_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]+15)
+            if not it_b_dl == it_e_dl:
+                print("no doppler lidar for this profile", i)
+                profiles['v_lidar'] = lT.slice_container(data['v_lidar'], 
+                        index={'time': [it_b_dl, it_e_dl]})
+                profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
+                        index={'time': [it_b_dl, it_e_dl]})
+
+    #    if windprofiler_present:
+    #        wp_timebin=wp_vel.get_time_bin(Z.times[i])
+    #    
+    #    if corrected_tfv_present:
+    #        tfv_bin=tfv.get_time_bin(v.times[i])
+    #        if tfv.times[tfv_bin]-v.times[i]>75.0:
+    #            tfv_profile=copy.deepcopy(v.data[i])
+    #            tfv_profile[:]=0
+    #            vair_profile=copy.deepcopy(v.data[i])
+    #            vair_profile[:]=0
+    #        else:
+    #            tfv_profile=unmask(tfv.data[tfv_bin])
+    #            vair_profile=unmask(vair.data[tfv_bin])
+    #
+
+        profiles['T'] = lT.slice_container(data['T'], index={'time': [i]})
+        profiles['p'] = lT.slice_container(data['p'], index={'time': [i]})
+        profiles['uwind'] = lT.slice_container(data['uwind'], index={'time': [i]})
+        profiles['vwind'] = lT.slice_container(data['vwind'], index={'time': [i]})
+
+        keys_to_feature = ["IWC", "LWC_S", "LWC", "Z", "v", "width", "T", "p", "SNR",
+            "uwind", "vwind", "beta", "LDR", "LDRcorr"]
+        if lidar_present:
+            keys_to_feature += ["delta"]
+
+        features_in_profile = find_features_in_profile(profiles, keys_to_feature)
+        features_in_timestep.append(features_in_profile)
+
+
+    #extract mixed-phase features and put them in a list
+    detected_features_mixed=[]
+    detected_features_ice=[]
+    detected_features_tower=[]
+
+    for features_in_profile in features_in_timestep:
+        for f in features_in_profile:
+            if f.type=="mixed-phase" or f.type=="liquid-based" or f.type=="pure_liquid":
+                detected_features_mixed.append(f)
+            elif f.type=="pure_ice":
+                detected_features_ice.append(f)
+            elif f.type=="tower":
+                detected_features_tower.append(f)
+
+    print("Searching for layered clouds")
+    clouds_mixed=connect_features(detected_features_mixed,
+                                h_threshold=4000.0,v_threshold=200.0,cloud_type="layered")
+    #clouds_mixed = []
+    print("Searching for cirrus (pure ice) clouds")
+    #
+    # 10000 as h_threshold seems a littlebit too much
+    clouds_ice=connect_features(detected_features_ice,h_threshold=5000.0,v_threshold=500,cloud_type="ice")
+    print("Searching for deep clouds")
+    clouds_tower=connect_features(detected_features_tower,h_threshold=5000.0,v_threshold=500.0,cloud_type="tower")
+    #clouds_tower = []
+
+    all_clouds = clouds_mixed + clouds_ice + clouds_tower
+    print("Saving")
+    save_object(all_clouds,'../cloud_properties/cloud_properties_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_clouds.dat')
+
+
+    #plotting
+    cloud_rectangles=[]
+    for i, cloud in enumerate(all_clouds):
+        
+        if all_clouds[i].n_profiles()==0:
+            continue
+        
+        c_type=cloud.most_common_type()
+        print("cloud type ", cloud.cloud_type)
+        print("len of feature", len(cloud.features))
+        #clouds[i].type=c_type
+        if c_type=="pure_liquid":
+            color='blue'
+        elif c_type=="pure_ice":
+            color='green'
+        elif c_type=="liquid-based":
+            color='blue'
+        elif c_type=="mixed-phase":
+            color='red'
+        elif c_type=="tower":
+            color="black"
+        else:
+            color='gray'
+        
+        cg = cloud.geometry()
+        #if clouds[i].top_variation()<200.0 and clouds[i].time_length()>1800 and clouds[i].cloud_top_thickness()[0]<400.0 and  clouds[i].fill_factor()>0.75:
+        #if c_type=="tower":
+        if cloud.time_length()>900 and cloud.fill_factor()>0.60:
+            cloud_rectangles.append((cg[0],cg[1],cg[2],cg[3],color))
+
+    fig, ax = lT.plot_timeheight(data['cc'], range_interval=[0, 12000])
+    import matplotlib.patches as patches
+    for cm in cloud_rectangles:
+        print(cm)
+        begin = h.ts_to_dt(cm[0])
+        duration=datetime.timedelta(seconds=cm[2])
+        rect = patches.Rectangle(
+                (begin,cm[1]),duration,cm[3],linewidth=2,
+                edgecolor=cm[4],facecolor=cm[4],alpha=0.2)
+
+        # Add the patch to the Axes
+        ax.add_patch(rect)
+
+    savename='../plots/cloud_overview_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_cloud_detection.png'
+    fig.savefig(savename, dpi=250)
+
+
 

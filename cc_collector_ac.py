@@ -124,11 +124,11 @@ for i in range(len(clouds)):
             output["v_TOP_AVG"],output["v_TOP_MED"],output["v_TOP_STD"],output["v_TOP_N"]=clouds[i].separation_average("v",sep)
             output["v_values"]=list(np.histogram(clouds[i].return_values("v",ice_only),60,(-1.5,0.0))[0])
 
-            output["tfv_AVG"],output["tfv_MED"],output["tfv_STD"],output["tfv_N"]=clouds[i].average("tfv",ice_only)
-            output["tfv_TOP_AVG"],output["tfv_TOP_MED"],output["tfv_TOP_STD"],output["tfv_TOP_N"]=clouds[i].separation_average("tfv",sep)
-            output["vair_AVG"],output["vair_MED"],output["vair_STD"],output["vair_N"]=clouds[i].combined_average("vair","v",ice_only)
+            #output["tfv_AVG"],output["tfv_MED"],output["tfv_STD"],output["tfv_N"]=clouds[i].average("tfv",ice_only)
+            #output["tfv_TOP_AVG"],output["tfv_TOP_MED"],output["tfv_TOP_STD"],output["tfv_TOP_N"]=clouds[i].separation_average("tfv",sep)
+            #output["vair_AVG"],output["vair_MED"],output["vair_STD"],output["vair_N"]=clouds[i].combined_average("vair","v",ice_only)
 
-            output["v_comb_tfv_AVG"],output["v_comb_tfv_MED"],output["v_comb_tfv_STD"],output["v_comb_tfv_N"]=clouds[i].combined_average("v","tfv",ice_only)
+            #output["v_comb_tfv_AVG"],output["v_comb_tfv_MED"],output["v_comb_tfv_STD"],output["v_comb_tfv_N"]=clouds[i].combined_average("v","tfv",ice_only)
 
             output["Z_AVG"],output["Z_MED"],output["Z_STD"],output["Z_N"]=clouds[i].average("Z",ice_only)
             output["Z_TOP_AVG"],output["Z_TOP_MED"],output["Z_TOP_STD"],output["Z_TOP_N"]=clouds[i].separation_average("Z",sep)
@@ -136,16 +136,27 @@ for i in range(len(clouds)):
 
             output["width_AVG"],output["width_MED"],output["width_STD"],output["width_N"]=clouds[i].average("width",ice_only)
 
-            output["SNR_AVG"],output["SNR_MED"],output["SNR_STD"],output["SNR_N"]=clouds[i].average("SNR",ice_only)
-            output["SNR_10pp"],output["SNR_90pp"]=clouds[i].pp90("SNR",ice_only)
+            #output["SNR_AVG"],output["SNR_MED"],output["SNR_STD"],output["SNR_N"]=clouds[i].average("SNR",ice_only)
+            #output["SNR_10pp"],output["SNR_90pp"]=clouds[i].pp90("SNR",ice_only)
 
             output["alpha_Hogan_AVG"],output["alpha_Hogan_MED"],output["alpha_Hogan_STD"],output["alpha_Hogan_N"]=clouds[i].average("alpha_hogan",ice_only)
             output["beta_AVG"],output["beta_MED"],output["beta_STD"],output["beta_N"]=clouds[i].average("beta",ice_only)
             output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("delta",ice_only)
             
-            output["v_lidar_AVG"],output["v_lidar_STD"],output["v_lidar_N"],output["v_lgt0_AVG"],output["v_lgt0_STD"],output["v_lgt0_N"],vv_values=clouds[i].velocities()
+            #output["v_lidar_AVG"],output["v_lidar_STD"],output["v_lidar_N"],output["v_lgt0_AVG"],output["v_lgt0_STD"],output["v_lgt0_N"],vv_values=clouds[i].velocities()
+            #output["v_lidar_histo"]=list(np.histogram(vv_values,60,(-3.0,3.0))[0])
 
-            output["v_lidar_histo"]=list(np.histogram(vv_values,60,(-3.0,3.0))[0])
+            # refactored vertical velocities in liquid layers
+            output['v_dl_mean'], output['v_dl_std'], output['v_dl_n'], v_base, _ = clouds[i].velocities()
+            output['v_dl_perc'] = np.percentile(v_base, [10,25,50,75,90])
+            output['v_dl_skew'] = scipy.stats.skew(v_base)
+
+            output['v_cr_mean'], output['v_cr_std'], output['v_cr_n'], v_base, _ = clouds[i].velocities_liquid_radar('whole')
+            output['v_cr_perc'] = np.percentile(v_base, [10,25,50,75,90])
+            output['v_cr_skew'] = scipy.stats.skew(v_base)
+
+            #manually corrected LDR
+            output["LDRcorr_TOP_AVG"], output["LDRcorr_TOP_MED"], output["LDRcorr_TOP_STD"], output["LDRcorr_TOP_N"] = clouds[i].separation_average("LDRcorr", sep)
 
             #interpolation
             #il=16
@@ -170,14 +181,10 @@ for i in range(len(clouds)):
                     print(n, vv_values[n])
 
             #output["adv_wind_profiler"],output["std_wind_profiler"],output["max_wind_profiler"],output["min_wind_profiler"],output["dvdh_wind_profiler"]=clouds[i].horizontal_wind(output["CTH"],4)
-
             #if len(clouds[i].features)>100:
-            
             #    clouds[i].FA()
-            if output["Begin_Date"]=='2018_12_30_21_05_14':
-             
+            if output["Begin_Date"]=='2018_12_30_21_05_14'
                 exit()
- 
 
             with open(outfile, "a+") as f:
                 if newfile:
