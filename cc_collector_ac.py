@@ -6,6 +6,7 @@ import numpy as np
 import pickle
 import os
 import CLS_Clouds as CLS
+import scipy.stats
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--date', type=str, help='date on which the algorithm should be run')
@@ -148,12 +149,20 @@ for i in range(len(clouds)):
 
             # refactored vertical velocities in liquid layers
             output['v_dl_mean'], output['v_dl_std'], output['v_dl_n'], v_base, _ = clouds[i].velocities()
-            output['v_dl_perc'] = np.percentile(v_base, [10,25,50,75,90])
-            output['v_dl_skew'] = scipy.stats.skew(v_base)
+            if len(v_base) > 0:
+                output['v_dl_perc'] = np.percentile(v_base, [10,25,50,75,90]).tolist()
+                output['v_dl_skew'] = scipy.stats.skew(v_base)
+            else:
+                output['v_dl_perc'] = [-99,-99,-99,-99,-99] 
+                output['v_dl_skew'] = -99
 
             output['v_cr_mean'], output['v_cr_std'], output['v_cr_n'], v_base, _ = clouds[i].velocities_liquid_radar('whole')
-            output['v_cr_perc'] = np.percentile(v_base, [10,25,50,75,90])
-            output['v_cr_skew'] = scipy.stats.skew(v_base)
+            if len(v_base) > 0:
+                output['v_cr_perc'] = np.percentile(v_base, [10,25,50,75,90]).tolist()
+                output['v_cr_skew'] = scipy.stats.skew(v_base)
+            else:
+                output['v_cr_perc'] = [-99,-99,-99,-99,-99] 
+                output['v_cr_skew'] = -99
 
             #manually corrected LDR
             output["LDRcorr_TOP_AVG"], output["LDRcorr_TOP_MED"], output["LDRcorr_TOP_STD"], output["LDRcorr_TOP_N"] = clouds[i].separation_average("LDRcorr", sep)
@@ -183,8 +192,8 @@ for i in range(len(clouds)):
             #output["adv_wind_profiler"],output["std_wind_profiler"],output["max_wind_profiler"],output["min_wind_profiler"],output["dvdh_wind_profiler"]=clouds[i].horizontal_wind(output["CTH"],4)
             #if len(clouds[i].features)>100:
             #    clouds[i].FA()
-            if output["Begin_Date"]=='2018_12_30_21_05_14'
-                exit()
+            #if output["Begin_Date"]=='2018_12_30_21_05_14':
+            #    exit()
 
             with open(outfile, "a+") as f:
                 if newfile:

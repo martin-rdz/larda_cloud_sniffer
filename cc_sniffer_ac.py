@@ -195,6 +195,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
         feature.base_range = profiles["cc"]["rg"][b[0]]
         feature.top_range = profiles["cc"]["rg"][b_top]
         feature.ranges = profiles["cc"]["rg"][b[0]:b_top]
+        feature.dh = profiles['cc']['rg'][1] - profiles['cc']['rg'][0]
                         
         feature.has_melting=search(clouds.melting, feature.classifications)
         feature.has_drizzle=search(clouds.drizzle, feature.classifications)
@@ -209,7 +210,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             mask = np.logical_or(datalist[0]["mask"], datalist[1]["mask"])
             return var, mask
         if 'Z' in profiles:
-            feature.measurements[k] = lT.combine(calc_alpha_hogan, 
+            feature.measurements['alpha_hogan'] = lT.combine(calc_alpha_hogan, 
                     [feature.measurements['Z'], feature.measurements["T"]], 
                     {'name': "alpha_hogan"})
 
@@ -356,27 +357,37 @@ if __name__ == "__main__":
         return var, data['mask']
     data["SNR"] = lT.combine(calc_snr, data['Z'], {'name': "SNR"})
 
-    try:
-        data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
-        def calc_Zcx(data):
-            Z = data[0]
-            LDR = data[1]
-            var = Z['var']*LDR['var']
-            mask = np.logical_or(Z['mask'], LDR['mask'])
-            return var, mask
-        data['Zcx'] = Transf.combine(calc_Zcx, [data['Z'], data['LDR']], {'name': "Zcx", 'var_lims': [-47,-20]})
+    #try:
+    data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
+    def calc_Zcx(data):
+        Z = data[0]
+        LDR = data[1]
+        var = Z['var']*LDR['var']
+        mask = np.logical_or(Z['mask'], LDR['mask'])
+        return var, mask
+    data['Zcx'] = lT.combine(calc_Zcx, [data['Z'], data['LDR']], {'name': "Zcx", 'var_lims': [-47,-20]})
 
-        new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-40), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-33)))
-        data['LDRcorr'] = {**data['LDR']}
-        data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
+    sensitivity_cx = np.broadcast_to((data['Zcx']['rg']**2*h.z2lin(-34)/5000**2), data['Zcx']['var'].shape)
+    new_ldr_mask = np.logical_or(data['Zcx']['var'] < sensitivity_cx, data['Zcx']['var'] < data['Z']['var']/h.z2lin(-30))
+    sensitivity_mask = (data['Zcx']['var'] < sensitivity_cx)
+    decoupling_mask = data['Zcx']['var'] < data['Z']['var']*h.z2lin(-30)
+    new_ldr_mask = np.logical_or(sensitivity_mask, decoupling_mask)
+    new_ldr_mask = np.logical_or(new_ldr_mask, data['LDR']['var'] > h.z2lin(-11))
+    data['LDRcorr'] = {**data['LDR']}
+    data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
 
-    except Exception as e:
-        print("No Radar depol found")
-        #create an empty depol dataset
-        data['LDR']=copy.deepcopy(data["Z"])
-        data['LDR']['var'][:]=-999
-        data['LDR']['mask'][:]=True
-        data['LDRcorr']=copy.deepcopy(data["LDR"])
+
+    #new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-37), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-32)))
+    #data['LDRcorr'] = {**data['LDR']}
+    #data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
+
+    #except Exception as e:
+    #    print("No Radar depol found")
+    #    #create an empty depol dataset
+    #    data['LDR']=copy.deepcopy(data["Z"])
+    #    data['LDR']['var'][:]=-999
+    #    data['LDR']['mask'][:]=True
+    #    data['LDRcorr']=copy.deepcopy(data["LDR"])
 
     # interpolate the model data
     data["T"] = lT.interpolate2d(data["T"], new_range=data["Z"]["rg"])

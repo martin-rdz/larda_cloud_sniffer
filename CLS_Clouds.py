@@ -46,7 +46,7 @@ class cloud_feature :
         self.measurements["T"]=[]
         self.measurements["p"]=[]
         self.measurements["SNR"]=[]
-        self.measurements["alpha_Hogan"]=[]
+        self.measurements["alpha_hogan"]=[]
         self.measurements["beta"]=[]
         self.measurements["delta"]=[]
         #self.measurements["tfv"]=[]
@@ -280,9 +280,6 @@ class cloud():
 
 
     def average(self,name,particle_types=[]):
-        
-        if not(name in self.features[0].measurements.keys()):
-            return 0,0,0,0
 
         values=[]
         for f in self.features:
@@ -292,11 +289,13 @@ class cloud():
                 cc_mask = np.isin(f.classifications, particle_types)
             else:
                 cc_mask = np.full(f.classifications, True)
-            var = f.measurements[name]['var'][cc_mask]
-            mask = f.measurements[name]['mask'][cc_mask]
-            values += var[~mask].tolist()
 
-        values=np.array(values)
+            if name in f.measurements.keys() and not type(f.measurements[name]) == list:
+                var = f.measurements[name]['var'][cc_mask]
+                mask = f.measurements[name]['mask'][cc_mask]
+                values += var[~mask].tolist()
+
+        values=np.array(values).ravel()
         assert np.all(np.isfinite(values)), values
         if len(values)>0:
             avg=np.average(values)
@@ -367,7 +366,7 @@ class cloud():
         
         return np.max(base_temps),np.median(top_temps),np.min(top_temps)
 
-    def velocities_radar_old(self):
+    def velocities_radar(self):
 
         v_top=[]
         v_top.append(0)
@@ -529,7 +528,7 @@ class cloud():
             #print('velocities', f.measurements.keys())
             #print('ll_base', ll_base, f.type)
             
-            if ll_base>=0 and len(f.measurements["v_lidar"])>0:
+            if ll_base >= 0 and len(f.measurements["v_lidar"]) > 0:
                 v_lidar = f.measurements["v_lidar"]
                 a_lidar = f.measurements["a_lidar"]
 
@@ -537,7 +536,12 @@ class cloud():
                 a_lidar['mask'] = np.logical_or(a_lidar['mask'], a_lidar['var']<a_thr)
 
                 #find base of liquid layer
-                mx_ind = h.argnearest(v_lidar['rg'], ll_base)
+                print(v_lidar['rg'], v_lidar['rg'].shape)
+                print(v_lidar['var'], v_lidar['var'].shape)
+                if v_lidar['var'].shape[1] > 1 and v_lidar['var'].shape[0] > 1:
+                    mx_ind = h.argnearest(v_lidar['rg'], ll_base)
+                else:
+                    mx_ind = 0
                 #print(ll_base, mx_ind)
                 #print(len(a_lidar['var']), a_lidar['var'].shape)
                 
@@ -548,7 +552,11 @@ class cloud():
                     if not v_lidar['mask'][it, mx_ind+idx]:
                         v_base.append(v_lidar['var'][it, mx_ind+idx])
                     #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
-                    locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx]))
+                    if v_lidar['var'].shape[1] > 1:
+                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx]))
+                    else:
+                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg']))
+
                 
         v_base=np.array(v_base)
         v_base=v_base[v_base!=0]
@@ -660,10 +668,11 @@ class cloud():
             print('cc_profile', f.classifications )
 
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
-                values.append(f.measurements[name]['var'][f.precipitation_top-spacing])
+                mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
+                values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
 
 
-        values=np.array(values)
+        values=np.array(values).ravel()
 
         print(values)
         if len(values)>0 and ~np.all(values==0):
@@ -715,8 +724,9 @@ class cloud():
         lwp_s=[]
         iwp=[]
 
-        dh=self.features[0].ranges[1]-self.features[0].ranges[0]
-
+        #dh=self.features[0].ranges[1]-self.features[0].ranges[0]
+        #dh = self.features[0].measurements["LWC"]['rg'][1] - self.features[0].measurements["LWC"]['rg'][0]
+        dh = self.features[0].dh
         for f in self.features:
             lwp.append(np.sum(get_only_valid(f.measurements["LWC"]))*dh)
             lwp_s.append(np.sum(get_only_valid(f.measurements["LWC_S"]))*dh)
