@@ -152,7 +152,6 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
     #if ~np.any(cc_profile==1) and ~np.any(cc_profile==3):
     #    continue
 
-    features_in_profile=[]
     #print cc_profile
     #ih = len(profiles["cc"]['rg']) - 2
 
@@ -192,6 +191,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
         feature = clouds.cloud_feature()
         feature.time = profiles['cc']['ts']
         feature.classifications = cc_profile[b[0]:b_top]
+        feature.classification_file_history = profiles['cc']['file_history']
         feature.base_range = profiles["cc"]["rg"][b[0]]
         feature.top_range = profiles["cc"]["rg"][b_top]
         feature.ranges = profiles["cc"]["rg"][b[0]:b_top]

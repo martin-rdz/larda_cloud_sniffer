@@ -845,3 +845,15 @@ class cloud():
 
         return np.median(vels), np.median(dirs)
 
+
+    def get_class_file_history(self):
+       
+        file_hist_all_features = [f.classification_file_history for f in self.features]
+        assert len(file_hist_all_features[0]) == 1, "too many file_hist elements in list"
+        processing_date = [datetime.datetime.strptime(file_hist[0][:20], "%d %b %Y %H:%M:%S")\
+                for file_hist in file_hist_all_features]
+
+        assert len(set(processing_date)) == 1, 'more than one processing date found for this day'
+        #05 Apr 2019 18:11:59
+
+        return processing_date[0].strftime("%Y%m%d_%H%M%S")

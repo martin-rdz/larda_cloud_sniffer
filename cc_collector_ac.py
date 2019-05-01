@@ -181,6 +181,8 @@ for i in range(len(clouds)):
             output["v_radar_AVG"],output["v_radar_STD"],output["v_radar_N"],output["v_radar_lgt0_AVG"],output["v_radar_lgt0_STD"],output["v_radar_lgt0_N"],output["v_radar_WIDTH"],vv_radar_values,output["Z_top"]=clouds[i].velocities_radar()
             output["v_radar_histo"]=list(np.histogram(vv_radar_values,60,(-3.0,3.0))[0])
 
+            output["file_hist_class"] = clouds[i].get_class_file_history()
+
             print(clouds[i].cloud_type,output["Z_top"])
 
             if int(output["A_Unique_Identifier"])==201207172309455452:
