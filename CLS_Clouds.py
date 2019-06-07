@@ -711,10 +711,10 @@ class cloud():
         thickness=[]
         for f in self.features:
             if f.liquid_layer_base!=[]:
-                thickness.append(f.top-f.liquid_layer_base[0])
+                thickness.append(f.top_range-f.liquid_layer_base[0])
             else:
                 pass
-                #thickness.append(f.top-f.base)
+                #thickness.append(f.top_range-f.base)
 
         return np.average(thickness),np.median(thickness),np.std(thickness)
 
