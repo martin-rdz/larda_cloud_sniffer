@@ -536,8 +536,8 @@ class cloud():
                 a_lidar['mask'] = np.logical_or(a_lidar['mask'], a_lidar['var']<a_thr)
 
                 #find base of liquid layer
-                print(v_lidar['rg'], v_lidar['rg'].shape)
-                print(v_lidar['var'], v_lidar['var'].shape)
+                #print(v_lidar['rg'], v_lidar['rg'].shape)
+                #print(v_lidar['var'], v_lidar['var'].shape)
                 if v_lidar['var'].shape[1] > 1 and v_lidar['var'].shape[0] > 1:
                     mx_ind = h.argnearest(v_lidar['rg'], ll_base)
                 else:
@@ -649,6 +649,18 @@ class cloud():
             histogr=np.repeat(0,10)
 
         return np.average(ilcr),np.median(ilcr),len(ilcr),list(histogr)
+
+    def separation_location(self, spacing):
+
+        times=[]
+        ranges=[]
+        for f in self.features:
+            if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
+                ranges.append(f.ranges[f.precipitation_top-spacing])
+                times.append(f.time)
+
+        return times, ranges
+
 
     def separation_average(self,name,spacing):
 
