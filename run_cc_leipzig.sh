@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #abort if a command fails
-set -e
+#set -e
 
 
 i="20150708"
@@ -41,6 +41,11 @@ e="20180730"
 
 i="20180803"
 e="20180807"
+
+
+i="20150708"
+e="20180807"
+
 while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "$e" +%Y%m%d)" ]; do
     python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
     python3 cc_collector_ac.py --campaign lacros_leipzig --date $i
