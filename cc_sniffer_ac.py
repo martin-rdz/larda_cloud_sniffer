@@ -1,15 +1,16 @@
 #!/usr/bin/python
 
-import sys
+import sys, os
 sys.path.append('/home/larda3/larda/')
 
 import argparse
 import CLS_Clouds as clouds
 import datetime
 import numpy as np
-import pickle
+import pickle, csv
 import copy
 from scipy import interpolate
+from collections import Counter
 
 import pyLARDA
 import pyLARDA.Transformations as lT
@@ -317,6 +318,54 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
     return features_in_profile
 
 
+
+
+def classify_wo_tower(classifications):
+
+    ice_present = search(clouds.ice, classifications)
+    liquid_present = search(clouds.liquid, classifications)
+    melting_present = search(clouds.melting, classifications)
+
+    print("ice, liquid, melting", ice_present, liquid_present, melting_present) 
+    if ice_present and not(liquid_present):
+        ctype="pure_ice"
+    elif not(ice_present) and liquid_present:
+        ctype="pure_liquid"
+    elif ice_present and liquid_present:
+        ctype = 'mixed-phase'
+    return ctype
+
+
+def features_to_simple_class(features_in_profile):
+
+    if not features_in_profile:
+        #print('clear profile')
+        return 'clear'
+
+    rain = list(filter(lambda f: np.any(np.isin(f.classifications, [2,3,6,7])), 
+                         features_in_profile))
+    #print('precip ', len(rain))
+    if rain:
+        #print([(f.base_range, f.top_range) for f in rain])
+        if rain[-1].top_range - rain[-1].base_range >= 4000:
+            return 'rain_deep'
+        else:
+            return 'rain_shallow'
+
+    if len(features_in_profile) > 1:
+        ctype = [classify_wo_tower(f.classifications) for f in features_in_profile]
+        #print([f.classifications for f in features_in_profile])
+        #print('multi_layer present ', ctype)
+        most_common = Counter(ctype).most_common(1)[0]
+        if most_common[1]/len(features_in_profile) > 0.66:
+            return 'multi_layer_mostly_' + most_common[0]
+        else:
+            return "multi_layer_various"
+    else:
+        #print(features_in_profile[0].type)
+        return 'single_layer_' + classify_wo_tower(features_in_profile[0].classifications)
+
+
 if __name__ == "__main__":
     import logging
     log = logging.getLogger('pyLARDA')
@@ -443,7 +492,8 @@ if __name__ == "__main__":
 
     verbose = False
 
-    features_in_timestep=[]
+    features_in_timestep = []
+    simple_class = []
     for i in range(data["cc"]["ts"].shape[0]):
         
         print("Time:",i)
@@ -500,6 +550,14 @@ if __name__ == "__main__":
             keys_to_feature += ["delta"]
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
+        
+        # estimate this more naive classification
+        if features_in_profile:
+            simple_class.append(features_to_simple_class(features_in_profile))
+            print('estimated class ', simple_class[-1])
+        else:
+            print('cloud free profile', data["cc"]["ts"][i])
+            simple_class.append('clear')
         features_in_timestep.append(features_in_profile)
 
 
@@ -532,6 +590,27 @@ if __name__ == "__main__":
     all_clouds = clouds_mixed + clouds_ice + clouds_tower
     print("Saving")
     save_object(all_clouds,'../cloud_properties/cloud_properties_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_clouds.dat')
+
+    #save the profile wise classification
+    class_counter = Counter(simple_class)
+    profile_classes = ['clear', 'rain_deep', 'rain_shallow',
+            'single_layer_pure_liquid', 'single_layer_pure_ice', 'single_layer_mixed-phase',
+            'multi_layer_various', 'multi_layer_mostly_pure_liquid', 
+            'multi_layer_mostly_pure_ice', 'multi_layer_mostly_mixed-phase' ]
+
+
+    print(simple_class)
+    assert len(simple_class) == np.sum([class_counter[e] for e in profile_classes])
+    outfile = '../cloud_collections/class_stat_'+campaign+'.csv'
+    if not os.path.isfile(outfile):
+        with open(outfile, 'w') as csvfile:
+            w = csv.writer(csvfile, delimiter=',')
+            w.writerow(['date', 'no_profiles']+profile_classes)
+
+    with open(outfile, 'a') as csvfile:
+        w = csv.writer(csvfile, delimiter=',')
+        w.writerow([begin_dt.strftime("%Y%m%d"), len(simple_class)] \
+            + [class_counter[e] for e in profile_classes])
 
 
     #plotting

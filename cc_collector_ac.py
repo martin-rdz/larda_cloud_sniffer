@@ -135,6 +135,8 @@ for i in range(len(clouds)):
             output["Z_TOP_AVG"],output["Z_TOP_MED"],output["Z_TOP_STD"],output["Z_TOP_N"]=clouds[i].separation_average("Z",sep)
             output["Z_values"]=list(np.histogram(clouds[i].return_values("Z",ice_only),90,(-70.0,20))[0])
 
+            output["SNR_TOP_AVG"],output["SNR_TOP_MED"],output["SNR_TOP_STD"],output["SNR_TOP_N"]=clouds[i].separation_average("SNR",sep)
+
             output["width_AVG"],output["width_MED"],output["width_STD"],output["width_N"]=clouds[i].average("width",ice_only)
 
             #output["SNR_AVG"],output["SNR_MED"],output["SNR_STD"],output["SNR_N"]=clouds[i].average("SNR",ice_only)
