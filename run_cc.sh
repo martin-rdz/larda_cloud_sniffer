@@ -20,9 +20,10 @@
 #done
 
 i="20181128"
+#i="20191028"
 #skip the 25jan
 #i="20190201"
-while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20190615" +%Y%m%d)" ]; do
+while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20191104" +%Y%m%d)" ]; do
     python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
     python3 cc_collector_ac.py --campaign lacros_dacapo --date $i
     i=$(date -d "$i + 1 day" +%Y%m%d)

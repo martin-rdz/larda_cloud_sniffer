@@ -60,6 +60,8 @@ else:
 clouds = load_object(infile)
 
 ice_only=[4]
+liquid=[1,3,5,7]
+droplets_only=[1,5]
 sep=6
 output={}
 
@@ -132,8 +134,12 @@ for i in range(len(clouds)):
             #output["v_comb_tfv_AVG"],output["v_comb_tfv_MED"],output["v_comb_tfv_STD"],output["v_comb_tfv_N"]=clouds[i].combined_average("v","tfv",ice_only)
 
             output["Z_AVG"],output["Z_MED"],output["Z_STD"],output["Z_N"]=clouds[i].average("Z",ice_only)
+            output["Z_AVG_drop"],output["Z_MED_drop"],output["Z_STD_drop"],output["Z_N_drop"]=clouds[i].average("Z",droplets_only)
             output["Z_TOP_AVG"],output["Z_TOP_MED"],output["Z_TOP_STD"],output["Z_TOP_N"]=clouds[i].separation_average("Z",sep)
-            output["Z_values"]=list(np.histogram(clouds[i].return_values("Z",ice_only),90,(-70.0,20))[0])
+            z_vals = clouds[i].return_values("Z",ice_only)
+            #print(z_vals)
+            #print(10*np.log10(z_vals))
+            output["Z_values"]=list(np.histogram(10*np.log10(z_vals),90,(-70.0,20))[0])
 
             output["SNR_TOP_AVG"],output["SNR_TOP_MED"],output["SNR_TOP_STD"],output["SNR_TOP_N"]=clouds[i].separation_average("SNR",sep)
 
@@ -143,6 +149,7 @@ for i in range(len(clouds)):
             #output["SNR_10pp"],output["SNR_90pp"]=clouds[i].pp90("SNR",ice_only)
 
             output["alpha_Hogan_AVG"],output["alpha_Hogan_MED"],output["alpha_Hogan_STD"],output["alpha_Hogan_N"]=clouds[i].average("alpha_hogan",ice_only)
+            output["alpha_Hogan_TOP_AVG"],output["alpha_Hogan_TOP_MED"],output["alpha_Hogan_TOP_STD"],output["alpha_Hogan_TOP_N"]=clouds[i].separation_average("alpha_hogan",sep)
             output["beta_AVG"],output["beta_MED"],output["beta_STD"],output["beta_N"]=clouds[i].average("beta",ice_only)
             output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("delta",ice_only)
             

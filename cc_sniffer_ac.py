@@ -205,7 +205,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             feature.measurements[k] = lT.slice_container(profiles[k], index={"range": [b[0], b_top]})
 
         def calc_alpha_hogan(datalist):
-            T_C = datalist[1]['var']
+            T_C = datalist[1]['var'] - 273.15
             Zdb = h.lin2z(datalist[0]['var'])
             var = 10**(0.000477*Zdb*T_C + 0.0683*Zdb - 0.0171*T_C - 3.11)
             mask = np.logical_or(datalist[0]["mask"], datalist[1]["mask"])
