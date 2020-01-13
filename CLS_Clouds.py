@@ -700,6 +700,34 @@ class cloud():
 
         return values_avg,values_med,values_std,n
 
+
+    def separation_values(self,name,spacing):
+
+        print("separation values", name, spacing)
+        if not(name in self.features[0].measurements.keys()):
+            print('name not in features')
+            return 0,0,0,0
+
+        values=[]
+        print('no_features', len(self.features))
+        for f in self.features:
+
+
+            #if f.valid==False:
+            #    continue
+            print('precip top',f.precipitation_top, f.precipitation_top-spacing)
+            print('cc_profile', f.classifications )
+
+            if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
+                mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
+                values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
+
+
+        values=np.array(values).ravel()
+
+        return values
+
+
     def liquid_layer_variation(self):
 
         cb=[]

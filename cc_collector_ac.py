@@ -136,6 +136,8 @@ for i in range(len(clouds)):
             output["Z_AVG"],output["Z_MED"],output["Z_STD"],output["Z_N"]=clouds[i].average("Z",ice_only)
             output["Z_AVG_drop"],output["Z_MED_drop"],output["Z_STD_drop"],output["Z_N_drop"]=clouds[i].average("Z",droplets_only)
             output["Z_TOP_AVG"],output["Z_TOP_MED"],output["Z_TOP_STD"],output["Z_TOP_N"]=clouds[i].separation_average("Z",sep)
+            z_top_vals = clouds[i].return_values("Z",top)
+            output["Z_TOP_values"]=list(np.histogram(10*np.log10(z_top_vals),90,(-70.0,20))[0])
             z_vals = clouds[i].return_values("Z",ice_only)
             #print(z_vals)
             #print(10*np.log10(z_vals))
