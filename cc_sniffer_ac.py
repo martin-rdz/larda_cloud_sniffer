@@ -401,6 +401,7 @@ if __name__ == "__main__":
 
     data = {k:larda.read("CLOUDNET", v, time_interval, [0, 'max']) for k,v in var_shortcuts.items()}
 
+
     def calc_snr(data):
         var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
         return var, data['mask']
@@ -425,6 +426,28 @@ if __name__ == "__main__":
     data['LDRcorr'] = {**data['LDR']}
     data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
 
+
+    data["qbsc"] = larda.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+    qbsc_interp = pyLARDA.Transformations.interpolate2d(
+        data['qbsc'], new_time=data['cc']['ts'], new_range=data['cc']['rg'])
+    def calc_ice_qext(datalist):
+        qext = datalist[0]['var']*32
+        mask = np.logical_or(qext < 1e-10, datalist[0]['mask'])
+        return qext, mask
+    ice_qext = pyLARDA.Transformations.combine(
+        calc_ice_qext, [qbsc_interp], 
+        {'var_unit': 'm^-1', 'var_lims': [5e-6,1e-2], 'name': 'ice qext'})
+
+    def calc_z_e(datalist):
+        assert np.all(datalist[0]['ts'] == datalist[1]['ts'])
+        assert np.all(datalist[0]['rg'] == datalist[1]['rg'])
+        ratio = datalist[0]['var']/datalist[1]['var']
+        mask = np.logical_or(datalist[0]['mask'], datalist[1]['mask'])
+        return ratio, mask
+
+    data["ratio_z_e"] = pyLARDA.Transformations.combine(
+        calc_z_e, [data['Z'], ice_qext], 
+        {'var_unit': 'm mm^-6', 'var_lims': [1e-0,3e3], 'name': 'Z/E'})
 
     #new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-37), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-32)))
     #data['LDRcorr'] = {**data['LDR']}
@@ -523,6 +546,8 @@ if __name__ == "__main__":
                         index={'time': [it_b_dl, it_e_dl]})
                 profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
                         index={'time': [it_b_dl, it_e_dl]})
+
+        profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
 
     #    if windprofiler_present:
     #        wp_timebin=wp_vel.get_time_bin(Z.times[i])

@@ -143,6 +143,9 @@ for i in range(len(clouds)):
             #print(10*np.log10(z_vals))
             output["Z_values"]=list(np.histogram(10*np.log10(z_vals),90,(-70.0,20))[0])
 
+            output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"]=clouds[i].separation_average("ratio_z_e",sep)
+            output["ZE_AVG"],output["ZE_MED"],output["ZE_N"]=clouds[i].average("ratio_z_e",ice_only)
+
             output["SNR_TOP_AVG"],output["SNR_TOP_MED"],output["SNR_TOP_STD"],output["SNR_TOP_N"]=clouds[i].separation_average("SNR",sep)
 
             output["width_AVG"],output["width_MED"],output["width_STD"],output["width_N"]=clouds[i].average("width",ice_only)
