@@ -136,7 +136,7 @@ for i in range(len(clouds)):
             output["Z_AVG"],output["Z_MED"],output["Z_STD"],output["Z_N"]=clouds[i].average("Z",ice_only)
             output["Z_AVG_drop"],output["Z_MED_drop"],output["Z_STD_drop"],output["Z_N_drop"]=clouds[i].average("Z",droplets_only)
             output["Z_TOP_AVG"],output["Z_TOP_MED"],output["Z_TOP_STD"],output["Z_TOP_N"]=clouds[i].separation_average("Z",sep)
-            z_top_vals = clouds[i].return_values("Z",top)
+            z_top_vals = clouds[i].return_values_separation("Z",sep)
             output["Z_TOP_values"]=list(np.histogram(10*np.log10(z_top_vals),90,(-70.0,20))[0])
             z_vals = clouds[i].return_values("Z",ice_only)
             #print(z_vals)
@@ -144,7 +144,9 @@ for i in range(len(clouds)):
             output["Z_values"]=list(np.histogram(10*np.log10(z_vals),90,(-70.0,20))[0])
 
             output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"]=clouds[i].separation_average("ratio_z_e",sep)
-            output["ZE_AVG"],output["ZE_MED"],output["ZE_N"]=clouds[i].average("ratio_z_e",ice_only)
+            #print('ZE_TOP_stat ', output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"])
+            output["ZE_AVG"],output["ZE_MED"],output["ZE_STD"],output["ZE_N"]=clouds[i].average("ratio_z_e",ice_only)
+            #print('ZE_stat ', output["ZE_AVG"],output["ZE_MED"],output["ZE_STD"],output["ZE_N"])
 
             output["SNR_TOP_AVG"],output["SNR_TOP_MED"],output["SNR_TOP_STD"],output["SNR_TOP_N"]=clouds[i].separation_average("SNR",sep)
 
@@ -157,6 +159,7 @@ for i in range(len(clouds)):
             output["alpha_Hogan_TOP_AVG"],output["alpha_Hogan_TOP_MED"],output["alpha_Hogan_TOP_STD"],output["alpha_Hogan_TOP_N"]=clouds[i].separation_average("alpha_hogan",sep)
             output["beta_AVG"],output["beta_MED"],output["beta_STD"],output["beta_N"]=clouds[i].average("beta",ice_only)
             output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("delta",ice_only)
+            output["voldepol_AVG"],output["voldepol_MED"],output["voldepol_STD"],output["voldepol_N"]=clouds[i].average("voldepol",ice_only)
             
             #output["v_lidar_AVG"],output["v_lidar_STD"],output["v_lidar_N"],output["v_lgt0_AVG"],output["v_lgt0_STD"],output["v_lgt0_N"],vv_values=clouds[i].velocities()
             #output["v_lidar_histo"]=list(np.histogram(vv_values,60,(-3.0,3.0))[0])
@@ -180,6 +183,7 @@ for i in range(len(clouds)):
 
             #manually corrected LDR
             output["LDRcorr_TOP_AVG"], output["LDRcorr_TOP_MED"], output["LDRcorr_TOP_STD"], output["LDRcorr_TOP_N"] = clouds[i].separation_average("LDRcorr", sep)
+            output["LDRcorr_AVG"], output["LDRcorr_MED"], output["LDRcorr_STD"], output["LDRcorr_N"] = clouds[i].average("LDRcorr", ice_only)
 
             #interpolation
             #il=16

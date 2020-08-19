@@ -104,9 +104,9 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
 
             v_dist=np.abs(f0.top_range - f1.top_range)
             h_dist=np.abs(c*(f0.time-f1.time))
-            print('v_dist', v_dist, "h_dist", h_dist, v_threshold, h_threshold)
+            #print('v_dist', v_dist, "h_dist", h_dist, v_threshold, h_threshold)
             if v_dist<v_threshold and h_dist<h_threshold:
-                print('found feature close to', i, i+n) 
+                #print('found feature close to', i, i+n) 
                 # none of the features is assign to a cloud
                 if f0.cloud_system==-1 and f1.cloud_system==-1:
                     f0.cloud_system=cloud_counter
@@ -118,7 +118,7 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
                     cloud_counter+=1
                     found_clouds.append(clouds.cloud())
                     found_clouds[-1].cloud_type=cloud_type
-                    print("new cloud system, total:", cloud_counter, "run:", cloud_type)
+                    #print("new cloud system, total:", cloud_counter, "run:", cloud_type)
 
                 # first feature is assigned to a cloud, second not
                 elif f0.cloud_system!=-1 and f1.cloud_system==-1:
@@ -158,7 +158,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
 
     # this assignment is possible outside the loop?
     cc_profile = profiles["cc"]['var']
-    print('cc_profile', cc_profile)
+    #print('cc_profile', cc_profile)
     
     indices_cloud = np.where(np.isin(profiles['cc']['var'], clouds.cloud_particles))[0]
     # original comment: Possible gap between a liquid cloud base and radar precipitation below [Cloudnet height steps]
@@ -181,12 +181,12 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
 
     # topmost pixels are not considered
     bounds_feature = list(filter(lambda x: x[0] != len(profiles['cc']['rg'])-1, bounds_feature))
-    print('bounds from function   ', len(bounds_feature), bounds_feature) if verbose else None
+    #print('bounds from function   ', len(bounds_feature), bounds_feature) if verbose else None
 
     #populate the feature with data
     features_in_profile = []
     for b in bounds_feature:
-        print('bound ', b)
+        #print('bound ', b)
         b_top = min(b[1]+1, cc_profile.shape[0]-1)
         #populate the feature with data
         feature = clouds.cloud_feature()
@@ -326,7 +326,7 @@ def classify_wo_tower(classifications):
     liquid_present = search(clouds.liquid, classifications)
     melting_present = search(clouds.melting, classifications)
 
-    print("ice, liquid, melting", ice_present, liquid_present, melting_present) 
+    #print("ice, liquid, melting", ice_present, liquid_present, melting_present) 
     if ice_present and not(liquid_present):
         ctype="pure_ice"
     elif not(ice_present) and liquid_present:
@@ -378,6 +378,9 @@ if __name__ == "__main__":
     build_lists=True 
     larda = pyLARDA.LARDA().connect(campaign, build_lists=build_lists)
 
+
+    larda_rsd2 = pyLARDA.LARDA('remote', uri = 'http://larda3.tropos.de').connect(campaign, build_lists=build_lists)
+
     print(larda.camp.info_dict)
 
     #hand over date
@@ -427,7 +430,7 @@ if __name__ == "__main__":
     data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
 
 
-    data["qbsc"] = larda.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+    data["qbsc"] = larda_rsd2.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
     qbsc_interp = pyLARDA.Transformations.interpolate2d(
         data['qbsc'], new_time=data['cc']['ts'], new_range=data['cc']['rg'])
     def calc_ice_qext(datalist):
@@ -443,6 +446,8 @@ if __name__ == "__main__":
         assert np.all(datalist[0]['rg'] == datalist[1]['rg'])
         ratio = datalist[0]['var']/datalist[1]['var']
         mask = np.logical_or(datalist[0]['mask'], datalist[1]['mask'])
+        mask = np.logical_or(mask, ~np.isfinite(ratio))
+        ratio[mask] = 0.0
         return ratio, mask
 
     data["ratio_z_e"] = pyLARDA.Transformations.combine(
@@ -467,6 +472,9 @@ if __name__ == "__main__":
     data["uwind"] = lT.interpolate2d(data["uwind"], new_range=data["Z"]["rg"])
     data["vwind"] = lT.interpolate2d(data["vwind"], new_range=data["Z"]["rg"])
 
+    voldepol = larda_rsd2.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
+    data['voldepol'] = pyLARDA.Transformations.interpolate2d(
+        voldepol, new_time=data['cc']['ts'], new_range=data['cc']['rg'])
 
     try:
         data["delta"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
@@ -573,6 +581,7 @@ if __name__ == "__main__":
             "uwind", "vwind", "beta", "LDR", "LDRcorr"]
         if lidar_present:
             keys_to_feature += ["delta"]
+        keys_to_feature += ['ratio_z_e']
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
         
@@ -624,7 +633,7 @@ if __name__ == "__main__":
             'multi_layer_mostly_pure_ice', 'multi_layer_mostly_mixed-phase' ]
 
 
-    print(simple_class)
+    #print(simple_class)
     assert len(simple_class) == np.sum([class_counter[e] for e in profile_classes])
     outfile = '../cloud_collections/class_stat_'+campaign+'.csv'
     if not os.path.isfile(outfile):

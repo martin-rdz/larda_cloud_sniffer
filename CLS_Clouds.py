@@ -235,6 +235,30 @@ class cloud():
 
         return values
 
+    def return_values_separation(self,name,spacing):
+
+        print("separation average", name, spacing)
+        if not(name in self.features[0].measurements.keys()):
+            print('name not in features')
+            return np.array([])
+
+        values=[]
+        print('no_features', len(self.features))
+        for f in self.features:
+
+
+            #if f.valid==False:
+            #    continue
+            #print('precip top',f.precipitation_top, f.precipitation_top-spacing)
+            #print('cc_profile', f.classifications )
+
+            if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
+                mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
+                values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
+
+        values=np.array(values).ravel()
+        return values
+
 
     def combined_average(self,name,ref_name,particle_types=[]):
 
@@ -295,6 +319,7 @@ class cloud():
                 mask = f.measurements[name]['mask'][cc_mask]
                 values += var[~mask].tolist()
 
+        print(name, values)
         values=np.array(values).ravel()
         assert np.all(np.isfinite(values)), values
         if len(values)>0:
@@ -676,8 +701,8 @@ class cloud():
 
             #if f.valid==False:
             #    continue
-            print('precip top',f.precipitation_top, f.precipitation_top-spacing)
-            print('cc_profile', f.classifications )
+            #print('precip top',f.precipitation_top, f.precipitation_top-spacing)
+            #print('cc_profile', f.classifications )
 
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
                 mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
@@ -686,7 +711,7 @@ class cloud():
 
         values=np.array(values).ravel()
 
-        print(values)
+        #print(values)
         if len(values)>0 and ~np.all(values==0):
             values_avg=np.average(values[values!=0])
             values_med=np.median(values[values!=0])
