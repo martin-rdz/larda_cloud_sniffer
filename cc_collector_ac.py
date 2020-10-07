@@ -165,7 +165,7 @@ for i in range(len(clouds)):
             #output["v_lidar_histo"]=list(np.histogram(vv_values,60,(-3.0,3.0))[0])
 
             # refactored vertical velocities in liquid layers
-            output['v_dl_mean'], output['v_dl_std'], output['v_dl_n'], v_base, _ = clouds[i].velocities()
+            output['v_dl_mean'], output['v_dl_std'], output['v_dl_n'], v_base, vel_locations = clouds[i].velocities()
             if len(v_base) > 0:
                 output['v_dl_perc'] = np.percentile(v_base, [10,25,50,75,90]).tolist()
                 output['v_dl_skew'] = scipy.stats.skew(v_base)
@@ -180,6 +180,15 @@ for i in range(len(clouds)):
             else:
                 output['v_cr_perc'] = [-99,-99,-99,-99,-99] 
                 output['v_cr_skew'] = -99
+
+            # and the timeseries analysis
+            # (f, Pxx_den), (time_shifts[:500], v_autocorr[:500])
+            periodogram, autocorr = CLS_Clouds.time_analysis_from_vel(vel_locations)
+            output["v_dl_period_f"] = periodogram[0].tolist()
+            output["v_dl_period_Pxx"] = periodogram[1].tolist()
+            output["v_dl_autocor_time"] = autocorr[0].tolist()
+            output["v_dl_autocor_coeff"] = autocorr[1].tolist()
+        
 
             #manually corrected LDR
             output["LDRcorr_TOP_AVG"], output["LDRcorr_TOP_MED"], output["LDRcorr_TOP_STD"], output["LDRcorr_TOP_N"] = clouds[i].separation_average("LDRcorr", sep)

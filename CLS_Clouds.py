@@ -2,6 +2,7 @@ import datetime
 import numpy as np
 import pickle
 from scipy import interpolate
+import scipy.signal
 
 from collections import Counter
 
@@ -87,6 +88,42 @@ def flatten(xs):
         result.append(xs)
     return result
 
+
+def autocorr(x):
+    result = np.correlate(x, x, mode='full')
+    return result[result.size // 2:]
+
+
+
+def time_analysis_from_vel(locations_of_vel):
+    """get the autocorrelation and the periodogram from the dl observations
+
+    Args:
+        locations_of_vel: list of tupels (ts, rg, vel)
+
+    Returns:
+        (f, Pxx_den), (time_shifts, v_autocorr)
+    """
+
+    locations_of_vel_s = sorted(locations_of_vel, key=lambda k: k[0])
+
+    sep_time = np.array([e[0] for e in locations_of_vel_s])
+    sep_range = [e[1] for e in locations_of_vel_s]
+    vel_line = np.array([e[2] for e in locations_of_vel_s])
+
+    delta_t = np.median(sep_time[1:] - sep_time[:-1])
+    print('delta t', delta_t)
+
+    f, Pxx_den = scipy.signal.welch(vel_line[vel_line != None],
+                                    fs=1/delta_t)
+
+    v_autocorr = autocorr(vel_line[vel_line != None])
+    v_autocorr = v_autocorr/float(v_autocorr.max())
+    time_shifts = np.arange(v_autocorr.shape[0])*delta_t
+
+    return (f, Pxx_den), (time_shifts[:500], v_autocorr[:500])
+
+
 class cloud():
     
     def __init__(self):
@@ -144,6 +181,8 @@ class cloud():
             sep_height.append(ll_base)
             
         med_sep_height=np.median(sep_height)
+
+        print('validate list of liquid layer bases', med_sep_height, sep_height)
        
         avg_th, med_th, std_th = self.cloud_top_thickness()
 
@@ -157,6 +196,7 @@ class cloud():
             elif f.type=="pure liquid":
                 ll_base=f.base
 
+            print('time of feature ', h.ts_to_dt(f.time), ll_base)
             if np.abs(ll_base-med_sep_height)>150.0:
                 f.valid=False
                 invalid+=1
@@ -471,6 +511,7 @@ class cloud():
         locations_of_vel = []
 
         for f in self.features:
+            
             if f.valid==False or "v" not in f.measurements.keys() \
                 or len(f.measurements['v']['rg'].shape) == 0:
                 print('no measurements in this feature, valid? ', f.valid)
@@ -531,7 +572,13 @@ class cloud():
 
 
     def velocities(self):
-        """refactored"""
+        """refactored
+        reads out the doppler lidar velocities of each feature
+
+        Returns:
+            v_mean,v_std,v_n,v_base,locations_of_vel
+        
+        """
         a_thr=0
         #a_thr=8e4
 
@@ -540,6 +587,7 @@ class cloud():
         locations_of_vel = []
 
         for f in self.features:
+
             if f.valid==False or "v_lidar" not in f.measurements.keys():
                 print('no measurements in this feature, valid? ', f.valid)
                 continue
@@ -576,18 +624,20 @@ class cloud():
                     #print(it, idx, mx_ind+idx)
                     if not v_lidar['mask'][it, mx_ind+idx]:
                         v_base.append(v_lidar['var'][it, mx_ind+idx])
+                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx], v_lidar['var'][it, mx_ind+idx]))
                     #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
-                    if v_lidar['var'].shape[1] > 1:
-                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx]))
-                    else:
-                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg']))
+                    #if v_lidar['var'].shape[1] > 1:
+                        
+                    #else:
+                        #locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg']))
 
                 
         v_base=np.array(v_base)
-        v_base=v_base[v_base!=0]
+        v_base=v_base[v_base != 0]
+        v_base=v_base[v_base != None]
 
         if len(v_base)>0:
-            v_mean=np.average(v_base)
+            v_mean=np.mean(v_base)
             v_std=np.std(v_base)
             v_n=len(v_base)
         else:
