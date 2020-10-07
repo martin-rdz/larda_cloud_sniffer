@@ -2,3 +2,5 @@ __pycache__/
 *.png
 *.ipynb
 local_*
+*.dat
+*.dat.bak
