@@ -95,7 +95,7 @@ def autocorr(x):
 
 
 
-def time_analysis_from_vel(locations_of_vel):
+def time_analysis_from_vel(locations_of_vel, idx):
     """get the autocorrelation and the periodogram from the dl observations
 
     Args:
@@ -108,8 +108,8 @@ def time_analysis_from_vel(locations_of_vel):
     locations_of_vel_s = sorted(locations_of_vel, key=lambda k: k[0])
 
     sep_time = np.array([e[0] for e in locations_of_vel_s])
-    sep_range = [e[1] for e in locations_of_vel_s]
-    vel_line = np.array([e[2] for e in locations_of_vel_s])
+    #sep_range = [e[1] for e in locations_of_vel_s]
+    vel_line = np.array([e[idx] for e in locations_of_vel_s])
 
     #print(vel_line)
 
@@ -190,7 +190,7 @@ class cloud():
 
         print('validate list of liquid layer bases', med_sep_height, sep_height)
        
-        avg_th, med_th, std_th = self.cloud_top_thickness()
+        avg_th, med_th, std_th, _ = self.cloud_top_thickness()
 
         valid,invalid=0,0
 
@@ -243,6 +243,9 @@ class cloud():
         return types_count.most_common(1)[0][0]
     
     def top_variation(self):
+        """get the std from tops"""
+
+        print(self.tops)
         
         return np.std(self.tops)
 
@@ -583,6 +586,9 @@ class cloud():
 
         Returns:
             v_mean,v_std,v_n,v_base,locations_of_vel
+
+
+        with locations_of_vel = v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx], v_lidar['var'][it, mx_ind+idx], f.valid
         
         """
         a_thr=0
@@ -594,9 +600,10 @@ class cloud():
 
         for f in self.features:
 
-            if f.valid==False or "v_lidar" not in f.measurements.keys():
-                print('no measurements in this feature, valid? ', f.valid)
-                continue
+            # 2020-10-12: try without the validity check
+            # if f.valid==False or "v_lidar" not in f.measurements.keys():
+            #     print('no measurements in this feature, valid? ', f.valid)
+            #     continue
 
             ll_base=-1
             if len(f.liquid_layer_base)>0:
@@ -607,7 +614,12 @@ class cloud():
             #print('velocities', f.measurements.keys())
             #print('ll_base', ll_base, f.type)
             
-            if ll_base >= 0 and len(f.measurements["v_lidar"]) > 0:
+            if 'v_lidar' not in f.measurements:
+                print('v_lidar missing at ', h.ts_to_dt(f.time))
+
+            print('here ', ll_base)
+            
+            if 'v_lidar' in f.measurements and ll_base >= 0 and len(f.measurements["v_lidar"]) > 0:
                 v_lidar = f.measurements["v_lidar"]
                 a_lidar = f.measurements["a_lidar"]
 
@@ -635,7 +647,7 @@ class cloud():
                             rg = v_lidar['rg'][mx_ind+idx]
                         else:
                             rg = v_lidar['rg']
-                        locations_of_vel.append((v_lidar['ts'][it], rg, v_lidar['var'][it, mx_ind+idx]))
+                        locations_of_vel.append((v_lidar['ts'][it], rg, v_lidar['var'][it, mx_ind+idx], f.valid))
                     #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
                     #if v_lidar['var'].shape[1] > 1:
                         
@@ -832,17 +844,35 @@ class cloud():
 
         ! change mr:
         omit non liquid thickness
-        """
+
+        Returns:
+            np.average(thickness), np.median(thickness), np.std(thickness), thickness_with_time
+
+
+        where (f.time, f.top_range-f.liquid_layer_base[0], f.liquid_layer_base[0], f.top_range, flag)
+
+        flag 0: feature.liquid_layer_base[0]
         
-        thickness=[]
+        flag 1: feature.base_range [omitted as base_range is frequently the base of the ice]
+        """
+
+        thickness_with_time = []
         for f in self.features:
+
+            print(f.time, f.top_range, f.liquid_layer_base, f.base_range)
+            # 2020-10-12 f.base_range and liquid_layer_base are not equal???
+            #
+
             if f.liquid_layer_base!=[]:
-                thickness.append(f.top_range-f.liquid_layer_base[0])
+                thickness_with_time.append((f.time, f.top_range-f.liquid_layer_base[0], f.liquid_layer_base[0], f.top_range, 0))
             else:
                 pass
-                #thickness.append(f.top_range-f.base)
+                #
+                #thickness_with_time.append((f.time, f.top_range-f.base_range, f.base_range, f.top_range, 1))
 
-        return np.average(thickness),np.median(thickness),np.std(thickness)
+        print('cloud top thickness: no tops ', len(self.tops), ' no thickness ',  len(thickness_with_time))
+        thickness = [e[1] for e in thickness_with_time]
+        return np.average(thickness), np.median(thickness), np.std(thickness), thickness_with_time
 
     def average_paths(self):
     

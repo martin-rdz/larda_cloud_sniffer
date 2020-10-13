@@ -224,6 +224,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             feature.measurements["a_lidar"] = lT.slice_container(
                     profiles['a_lidar'], index={"range": lidar_range})
 
+
         features_in_profile.append(feature)
 
     #if no features are detected, skip
@@ -248,10 +249,22 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
         elif not(ice_present) and liquid_present:
             
             f.type="pure_liquid"
+            #
+            # 2020-10-12: liquid only layers were missing the liquid layer base, which
+            #             introduced errors in the statistics (i.e. when using base_range)
+            #
+            feature_cc = f.classifications.copy()
+            # maybe the tower classification is connected to the 
+            # overwriting of the classification
+            indices_liquid = np.where(np.isin(feature_cc, clouds.liquid))[0]
+            bounds_liquid = bounds_of_runs(indices_liquid, maxstepsize=1)
+            f.liquid_layers = len(bounds_liquid)
+            f.liquid_layer_base = [f.ranges[il[0]] for il in bounds_liquid]
+            f.liquid_layer_top = [f.ranges[il[1]] for il in bounds_liquid]
         
         elif melting_present and ice_present and not(liquid_present):
         
-            if f.top_range-f.base_range<min_tower_height:
+            if f.top_range - f.base_range < min_tower_height:
                 f.type="pure_ice"
             else:
                 f.type="tower"
@@ -274,6 +287,8 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             indices_liquid = np.where(np.isin(feature_cc, clouds.liquid))[0]
             bounds_liquid = bounds_of_runs(indices_liquid, maxstepsize=1)
             print(bounds_liquid) if verbose else None
+
+            
 
             if feature_cc[0] in clouds.liquid:
                 f.type = 'liquid-based'
@@ -299,6 +314,8 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             f.liquid_layer_top = [f.ranges[il[1]] for il in bounds_liquid]
             print('liquid layer base', f.liquid_layer_base) if verbose else None
             print('liquid layer top', f.liquid_layer_top) if verbose else None
+
+            # print('sniffer ', f.classifications, f.base_range, f.liquid_layer_base)
 
             # index where ice precipiation starts
             f.precipitation_top = indices_liquid[0]
