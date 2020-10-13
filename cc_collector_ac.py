@@ -183,7 +183,7 @@ for i in range(len(clouds)):
 
             # and the timeseries analysis
             # (f, Pxx_den), (time_shifts[:500], v_autocorr[:500])
-            periodogram, autocorr = CLS_Clouds.time_analysis_from_vel(vel_locations)
+            periodogram, autocorr = CLS.time_analysis_from_vel(vel_locations)
             output["v_dl_period_f"] = periodogram[0].tolist()
             output["v_dl_period_Pxx"] = periodogram[1].tolist()
             output["v_dl_autocor_time"] = autocorr[0].tolist()
@@ -210,7 +210,7 @@ for i in range(len(clouds)):
 
             output["file_hist_class"] = clouds[i].get_class_file_history()
 
-            print(clouds[i].cloud_type,output["Z_top"])
+            #print(clouds[i].cloud_type,output["Z_top"])
 
             if int(output["A_Unique_Identifier"])==201207172309455452:
                 print(output["A_Unique_Identifier"])

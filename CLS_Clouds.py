@@ -111,15 +111,21 @@ def time_analysis_from_vel(locations_of_vel):
     sep_range = [e[1] for e in locations_of_vel_s]
     vel_line = np.array([e[2] for e in locations_of_vel_s])
 
+    #print(vel_line)
+
     delta_t = np.median(sep_time[1:] - sep_time[:-1])
-    print('delta t', delta_t)
+    print('delta t', delta_t, vel_line[:10])
 
-    f, Pxx_den = scipy.signal.welch(vel_line[vel_line != None],
-                                    fs=1/delta_t)
+    if len(vel_line) > 0:
+        f, Pxx_den = scipy.signal.welch(vel_line[vel_line != None],
+                                        fs=1/delta_t)
 
-    v_autocorr = autocorr(vel_line[vel_line != None])
-    v_autocorr = v_autocorr/float(v_autocorr.max())
-    time_shifts = np.arange(v_autocorr.shape[0])*delta_t
+        v_autocorr = autocorr(vel_line[vel_line != None])
+        v_autocorr = v_autocorr/float(v_autocorr.max())
+        time_shifts = np.arange(v_autocorr.shape[0])*delta_t
+    else:
+        f, Pxx_den = np.array([]), np.array([])
+        time_shifts, v_autocorr = np.array([]), np.array([])
 
     return (f, Pxx_den), (time_shifts[:500], v_autocorr[:500])
 
@@ -359,7 +365,7 @@ class cloud():
                 mask = f.measurements[name]['mask'][cc_mask]
                 values += var[~mask].tolist()
 
-        print(name, values)
+        #print('average', name, values[:10], values[-10:])
         values=np.array(values).ravel()
         assert np.all(np.isfinite(values)), values
         if len(values)>0:
@@ -624,7 +630,12 @@ class cloud():
                     #print(it, idx, mx_ind+idx)
                     if not v_lidar['mask'][it, mx_ind+idx]:
                         v_base.append(v_lidar['var'][it, mx_ind+idx])
-                        locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx], v_lidar['var'][it, mx_ind+idx]))
+                        # sometimes rg is only a float
+                        if isinstance(v_lidar['rg'], np.ndarray):
+                            rg = v_lidar['rg'][mx_ind+idx]
+                        else:
+                            rg = v_lidar['rg']
+                        locations_of_vel.append((v_lidar['ts'][it], rg, v_lidar['var'][it, mx_ind+idx]))
                     #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
                     #if v_lidar['var'].shape[1] > 1:
                         
