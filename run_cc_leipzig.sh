@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #abort if a command fails
-#set -e
+set -e
 
 
 i="20150708"
@@ -46,8 +46,15 @@ e="20180807"
 i="20150708"
 e="20180807"
 
-while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "$e" +%Y%m%d)" ]; do
-    python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
-    python3 cc_collector_ac.py --campaign lacros_leipzig --date $i
-    i=$(date -d "$i + 1 day" +%Y%m%d)
+
+i="20140101"
+e="20180807"
+
+cat avail_dates_lacros_leipzig.dat | while read i || [[ -n $i ]]; do
+#while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "$e" +%Y%m%d)" ]; do
+    if [[ "$i" != *"#"* ]]; then
+       	python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
+        python3 cc_collector_ac.py --campaign lacros_leipzig --date $i
+    fi
+    #i=$(date -d "$i + 1 day" +%Y%m%d)
 done

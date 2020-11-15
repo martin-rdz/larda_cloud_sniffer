@@ -49,7 +49,7 @@ class cloud_feature :
         self.measurements["SNR"]=[]
         self.measurements["alpha_hogan"]=[]
         self.measurements["beta"]=[]
-        self.measurements["delta"]=[]
+        self.measurements["voldepol"]=[]
         #self.measurements["tfv"]=[]
         #self.measurements["vair"]=[]
 
@@ -279,7 +279,7 @@ class cloud():
             mask = f.measurements[name]['mask'][cc_mask]
             values += var[~mask].tolist()
 
-        values=np.array(values)
+        values = np.array(values).ravel().astype(np.float64)
         assert np.all(np.isfinite(values)), values
 
         return values
@@ -355,6 +355,7 @@ class cloud():
     def average(self,name,particle_types=[]):
 
         values=[]
+        print('assemble', name)
         for f in self.features:
             #if f.valid==False:
             #    continue
@@ -363,13 +364,18 @@ class cloud():
             else:
                 cc_mask = np.full(f.classifications, True)
 
-            if name in f.measurements.keys() and not type(f.measurements[name]) == list:
+            #print('cc_mask ', cc_mask)
+            if name in f.measurements.keys() and not type(f.measurements[name]) == list \
+                    and any(cc_mask):
                 var = f.measurements[name]['var'][cc_mask]
                 mask = f.measurements[name]['mask'][cc_mask]
-                values += var[~mask].tolist()
+                #print('var', type(var), var.dtype, var)
+                #print('mask', type(mask), mask.dtype, mask)
+                if np.any(mask) and np.any(~np.isnan(var)):
+                    values += var[~mask].tolist()
 
         #print('average', name, values[:10], values[-10:])
-        values=np.array(values).ravel()
+        values = np.array(values).ravel().astype(np.float64)
         assert np.all(np.isfinite(values)), values
         if len(values)>0:
             avg=np.average(values)
@@ -381,6 +387,7 @@ class cloud():
             med=0.0
             std=0.0
             n=0
+        print('assembled ', name, values[:10], values[-10:], ' avg ', avg)
         
         return avg,med,std,n
    
@@ -398,7 +405,7 @@ class cloud():
             mask = f.measurements[name]['mask'][cc_mask]
             values += var[~mask].tolist()
 
-        values=np.array(values)
+        values = np.array(values).ravel().astype(np.float64)
         assert np.all(np.isfinite(values)), values
 
         if len(values)>1 and ~np.all(values==0):
@@ -779,6 +786,7 @@ class cloud():
 
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
                 mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
+                print(type(mask), mask.dtype, mask.data)
                 values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
 
 

@@ -2,6 +2,7 @@
 
 import sys, os
 sys.path.append('/home/larda3/larda/')
+import traceback
 
 import argparse
 import CLS_Clouds as clouds
@@ -392,13 +393,16 @@ if __name__ == "__main__":
     log.addHandler(logging.StreamHandler())
 
     campaign=args.campaign
-    build_lists=True 
+    build_lists=False 
     larda = pyLARDA.LARDA().connect(campaign, build_lists=build_lists)
 
 
-    larda_rsd2 = pyLARDA.LARDA('remote', uri = 'http://larda3.tropos.de').connect(campaign, build_lists=build_lists)
+    #larda_rsd2 = pyLARDA.LARDA('remote', uri = 'http://larda3.tropos.de').connect(campaign, build_lists=build_lists)
+    larda_rsd2 = pyLARDA.LARDA('local').connect(campaign, build_lists=build_lists)
 
     print(larda.camp.info_dict)
+    larda_polly_ari = pyLARDA.LARDA('local').connect('polly_arielle_leipzig', build_lists=build_lists)
+    larda_polly_ift = pyLARDA.LARDA('local').connect('polly_ift_leipzig', build_lists=build_lists)
 
     #hand over date
     begin_dt=datetime.datetime.strptime(args.date, "%Y%m%d")
@@ -411,6 +415,7 @@ if __name__ == "__main__":
     #advanced datasets
     lidar_present=False
     doppler_present=False
+    qbsc_present=False
     windprofiler_present=False
     corrected_tfv_present=False
 
@@ -419,16 +424,25 @@ if __name__ == "__main__":
             "Z":"Z", "v": "VEL", "uwind":"UWIND", "vwind":"VWIND",
             "T": "T", "p": "P", "beta": "beta", "width": "WIDTH"}
 
-    data = {k:larda.read("CLOUDNET", v, time_interval, [0, 'max']) for k,v in var_shortcuts.items()}
-
+    #data = {k:larda.read("CLOUDNET", v, time_interval, [0, 'max']) for k,v in var_shortcuts.items()}
+    data = {}
+    for k,v in var_shortcuts.items():
+        print('loading ', k, v)
+        data[k] = larda.read("CLOUDNET", v, time_interval, [0, 'max'])
+        data[k]['var'] = data[k]['var'].data.astype(np.float64)
+        data[k]['mask'] = data[k]['mask'].data
 
     def calc_snr(data):
         var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
         return var, data['mask']
     data["SNR"] = lT.combine(calc_snr, data['Z'], {'name': "SNR"})
+    data["SNR"]['var'] = data["SNR"]['var'].data.astype(np.float64)
 
     #try:
     data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
+    data["LDR"]['var'] = data["LDR"]['var'].data.astype(np.float64)
+    #data["LDR"]['mask'] = data["LDR"]['mask'].data
+    data["LDR"]['mask'] = data["LDR"]['mask'].data
     def calc_Zcx(data):
         Z = data[0]
         LDR = data[1]
@@ -447,29 +461,100 @@ if __name__ == "__main__":
     data['LDRcorr']['mask'] = np.logical_or(data['LDR']['mask'], new_ldr_mask)
 
 
-    data["qbsc"] = larda_rsd2.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
-    qbsc_interp = pyLARDA.Transformations.interpolate2d(
-        data['qbsc'], new_time=data['cc']['ts'], new_range=data['cc']['rg'])
-    def calc_ice_qext(datalist):
-        qext = datalist[0]['var']*32
-        mask = np.logical_or(qext < 1e-10, datalist[0]['mask'])
-        return qext, mask
-    ice_qext = pyLARDA.Transformations.combine(
-        calc_ice_qext, [qbsc_interp], 
-        {'var_unit': 'm^-1', 'var_lims': [5e-6,1e-2], 'name': 'ice qext'})
+    try:
+        data["qbsc"] = larda_rsd2.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+        data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
+        #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+        data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+        qbsc_present = True
+    except:
+        traceback.print_exc()
+        print('quasibackscatter not available from lacros polly')
 
-    def calc_z_e(datalist):
-        assert np.all(datalist[0]['ts'] == datalist[1]['ts'])
-        assert np.all(datalist[0]['rg'] == datalist[1]['rg'])
-        ratio = datalist[0]['var']/datalist[1]['var']
-        mask = np.logical_or(datalist[0]['mask'], datalist[1]['mask'])
-        mask = np.logical_or(mask, ~np.isfinite(ratio))
-        ratio[mask] = 0.0
-        return ratio, mask
 
-    data["ratio_z_e"] = pyLARDA.Transformations.combine(
-        calc_z_e, [data['Z'], ice_qext], 
-        {'var_unit': 'm mm^-6', 'var_lims': [1e-0,3e3], 'name': 'Z/E'})
+    if campaign == 'lacros_leipzig':
+        try:
+            data["qbsc"] = larda_polly_ari.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+            data["qbsc"]['var'] = data['qbsc']['var'].data.astype(np.float64)
+            #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+            data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+            qbsc_present = True
+        except:
+            traceback.print_exc()
+            print('quasibackscatter not available from arielle')
+        try:
+            data["qbsc"] = larda_polly_ift.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+            data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
+            #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+            data["qbsc"]['mask'] = data["qbsc"]['mask'].data
+            qbsc_present = True
+        except:
+            traceback.print_exc()
+            print('quasibackscatter not available from polly ift')
+
+    #try:
+    #    data["voldepol"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
+    #    lidar_present=True
+    #except Exception as e:
+    #    print("Error:", e)
+    #    print("No lidar data found, continue with lidar_present=False")
+    try:
+        voldepol = larda_rsd2.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
+        voldepol['var'] = voldepol['var'].data.astype(np.float64)
+        #voldepol['mask'] = voldepol['mask'].data
+        voldepol['mask'] = voldepol['mask'].data
+        lidar_present=True
+    except:
+        traceback.print_exc()
+        print("No lidar data found, continue with lidar_present=False")
+
+    if campaign == 'lacros_leipzig':
+        try:
+            voldepol = larda_polly_ari.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
+            voldepol['var'] = voldepol['var'].data.astype(np.float64)
+            #voldepol['mask'] = voldepol['mask'].data
+            voldepol['mask'] = voldepol['mask'].data
+            lidar_present=True
+        except:
+            traceback.print_exc()
+            print('quasibackscatter not available from arielle')
+        try:
+            voldepol = larda_polly_ift.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
+            voldepol['var'] = voldepol['var'].data.astype(np.float64)
+            #voldepol['mask'] = voldepol['mask'].data
+            voldepol['mask'] = voldepol['mask'].data
+            lidar_present=True
+        except:
+            traceback.print_exc()
+            print('quasibackscatter not available from polly ift')
+
+    if lidar_present:
+        data['voldepol'] = pyLARDA.Transformations.interpolate2d(
+            voldepol, new_time=data['cc']['ts'], new_range=data['cc']['rg'])
+
+    if qbsc_present:
+        qbsc_interp = pyLARDA.Transformations.interpolate2d(
+            data['qbsc'], new_time=data['cc']['ts'], new_range=data['cc']['rg'])
+        def calc_ice_qext(datalist):
+            qext = datalist[0]['var']*32
+            mask = np.logical_or(qext < 1e-10, datalist[0]['mask'])
+            return qext, mask
+        ice_qext = pyLARDA.Transformations.combine(
+            calc_ice_qext, [qbsc_interp], 
+            {'var_unit': 'm^-1', 'var_lims': [5e-6,1e-2], 'name': 'ice qext'})
+    
+        def calc_z_e(datalist):
+            assert np.all(datalist[0]['ts'] == datalist[1]['ts'])
+            assert np.all(datalist[0]['rg'] == datalist[1]['rg'])
+            ratio = datalist[0]['var']/datalist[1]['var']
+            mask = np.logical_or(datalist[0]['mask'], datalist[1]['mask'])
+            mask = np.logical_or(mask, ~np.isfinite(ratio))
+            ratio[mask] = 0.0
+            return ratio, mask
+    
+        data["ratio_z_e"] = pyLARDA.Transformations.combine(
+            calc_z_e, [data['Z'], ice_qext], 
+            {'var_unit': 'm mm^-6', 'var_lims': [1e-0,3e3], 'name': 'Z/E'})
 
     #new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-37), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-32)))
     #data['LDRcorr'] = {**data['LDR']}
@@ -489,24 +574,17 @@ if __name__ == "__main__":
     data["uwind"] = lT.interpolate2d(data["uwind"], new_range=data["Z"]["rg"])
     data["vwind"] = lT.interpolate2d(data["vwind"], new_range=data["Z"]["rg"])
 
-    voldepol = larda_rsd2.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
-    data['voldepol'] = pyLARDA.Transformations.interpolate2d(
-        voldepol, new_time=data['cc']['ts'], new_range=data['cc']['rg'])
-
-    try:
-        data["delta"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
-        lidar_present=True
-    except Exception as e:
-        print("Error:", e)
-        print("No lidar data found, continue with lidar_present=False")
-
     try:
         data["v_lidar"] = larda.read("SHAUN","VEL",time_interval, [0,'max'])
         data["a_lidar"] = larda.read("SHAUN","beta_raw",time_interval, [0,'max'])
+        data["v_lidar"]['var'] = data['v_lidar']['var'].data.astype(np.float64)
+        data['a_lidar']['var'] = data['a_lidar']['var'].data.astype(np.float64)
+        data["v_lidar"]['mask'] = data["v_lidar"]['mask'].data
+        data['a_lidar']['mask'] = data['a_lidar']['mask'].data
         #v_lidar.abs_reference(a_lidar, 0.1e9)
         doppler_present=True
-    except Exception as e:
-        print("Error:", e)
+    except:
+        traceback.print_exc()
         print("No SHAUN data found, continue with doppler_present=False")
 
     #try:
@@ -538,6 +616,11 @@ if __name__ == "__main__":
     #    print("Error:", e)
     #    print("No terminal fall velocity and air velocity information found")
 
+    for k in data.keys():
+        print('checking ', k, type(data[k]['mask']), type(data[k]['var']))
+        assert not isinstance(data[k]['mask'], np.ma.MaskedArray), data[k]['mask']
+        assert not isinstance(data[k]['var'], np.ma.MaskedArray), data[k]['var']
+
     verbose = False
 
     features_in_timestep = []
@@ -560,7 +643,7 @@ if __name__ == "__main__":
         profiles['beta'] = lT.slice_container(data['beta'], index={'time': [i]})
         
         if lidar_present:
-            profiles['delta'] = lT.slice_container(data['delta'], index={'time': [i]})
+            profiles['voldepol'] = lT.slice_container(data['voldepol'], index={'time': [i]})
 
         if doppler_present:
             it_b_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]-15)
@@ -572,7 +655,8 @@ if __name__ == "__main__":
                 profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
                         index={'time': [it_b_dl, it_e_dl]})
 
-        profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
+        if qbsc_present:
+            profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
 
     #    if windprofiler_present:
     #        wp_timebin=wp_vel.get_time_bin(Z.times[i])
@@ -597,8 +681,9 @@ if __name__ == "__main__":
         keys_to_feature = ["IWC", "LWC_S", "LWC", "Z", "v", "width", "T", "p", "SNR",
             "uwind", "vwind", "beta", "LDR", "LDRcorr"]
         if lidar_present:
-            keys_to_feature += ["delta"]
-        keys_to_feature += ['ratio_z_e']
+            keys_to_feature += ["voldepol"]
+        if qbsc_present:
+            keys_to_feature += ['ratio_z_e']
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
         

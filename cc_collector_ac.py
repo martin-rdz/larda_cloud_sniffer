@@ -168,7 +168,7 @@ for i in range(len(clouds)):
             output["alpha_Hogan_AVG"],output["alpha_Hogan_MED"],output["alpha_Hogan_STD"],output["alpha_Hogan_N"]=clouds[i].average("alpha_hogan",ice_only)
             output["alpha_Hogan_TOP_AVG"],output["alpha_Hogan_TOP_MED"],output["alpha_Hogan_TOP_STD"],output["alpha_Hogan_TOP_N"]=clouds[i].separation_average("alpha_hogan",sep)
             output["beta_AVG"],output["beta_MED"],output["beta_STD"],output["beta_N"]=clouds[i].average("beta",ice_only)
-            output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("delta",ice_only)
+            output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("voldepol",ice_only)
             output["voldepol_AVG"],output["voldepol_MED"],output["voldepol_STD"],output["voldepol_N"]=clouds[i].average("voldepol",ice_only)
             
             #output["v_lidar_AVG"],output["v_lidar_STD"],output["v_lidar_N"],output["v_lgt0_AVG"],output["v_lgt0_STD"],output["v_lgt0_N"],vv_values=clouds[i].velocities()
@@ -194,7 +194,7 @@ for i in range(len(clouds)):
             # and the timeseries analysis
             # (f, Pxx_den), (time_shifts[:500], v_autocorr[:500])
             vel_locations_s = sorted(vel_locations, key=lambda k: k[0])
-            periodogram, autocorr = CLS_Clouds.time_analysis_from_vel(vel_locations_s, 2)
+            periodogram, autocorr = CLS.time_analysis_from_vel(vel_locations)
             output["v_dl_period_f"] = periodogram[0].tolist()
             output["v_dl_period_Pxx"] = periodogram[1].tolist()
             output["v_dl_autocor_time"] = autocorr[0].tolist()
