@@ -114,12 +114,17 @@ for i in range(len(clouds)):
             thickness_vals_s = sorted(thickness_vals, key=lambda k: k[0])
             period_top, autocorr_top = CLS.time_analysis_from_vel(thickness_vals_s, 3)
             
-            print(autocorr_top)
+            #print(autocorr_top)
             if len(autocorr_top[1] > 0):
                 i_above_thres = np.where(autocorr_top[1] > 0.8)[0][-1]
                 output["CTH_autocorr_08_time"] = autocorr_top[0][i_above_thres]
             else:
                 output["CTH_autocorr_08_time"] = -1
+            #wh = np.where(autocorr_top[1] > 0.0)[0]
+            #if len(wh) > 0:
+            #    output["CTH_autocorr_08_time"] = autocorr_top[0][wh[-1]]
+            #else:
+            #    output["CTH_autocorr_08_time"] = -99
             # output["v_dl_period_f"] = periodogram[0].tolist()
             # output["v_dl_period_Pxx"] = periodogram[1].tolist()
             # output["v_dl_autocor_time"] = autocorr[0].tolist()
