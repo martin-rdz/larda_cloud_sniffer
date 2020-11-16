@@ -43,7 +43,7 @@ i="20200312"
 #i="20191028"
 #skip the 25jan
 #i="20190201"
-cat avail_dates_lacros_dacapo.dat.bak2 | while read i || [[ -n $i ]]; do
+cat  avail_dates_lacros_dacapo_interim.dat | while read i || [[ -n $i ]]; do
 #while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20200630" +%Y%m%d)" ]; do
     echo ${i}
     #python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
