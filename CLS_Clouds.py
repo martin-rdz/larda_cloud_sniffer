@@ -355,7 +355,7 @@ class cloud():
     def average(self,name,particle_types=[]):
 
         values=[]
-        print('assemble', name)
+        print('assemble', name, h.ts_to_dt(self.features[0].time))
         for f in self.features:
             #if f.valid==False:
             #    continue
@@ -364,14 +364,15 @@ class cloud():
             else:
                 cc_mask = np.full(f.classifications, True)
 
+            #print('classification ', f.classifications)
             #print('cc_mask ', cc_mask)
             if name in f.measurements.keys() and not type(f.measurements[name]) == list \
                     and any(cc_mask):
                 var = f.measurements[name]['var'][cc_mask]
-                mask = f.measurements[name]['mask'][cc_mask]
+                mask = f.measurements[name]['mask'][cc_mask].astype(bool)
                 #print('var', type(var), var.dtype, var)
                 #print('mask', type(mask), mask.dtype, mask)
-                if np.any(mask) and np.any(~np.isnan(var)):
+                if not np.all(mask) and np.all(~np.isnan(var)):
                     values += var[~mask].tolist()
 
         #print('average', name, values[:10], values[-10:])
@@ -624,7 +625,7 @@ class cloud():
             if 'v_lidar' not in f.measurements:
                 print('v_lidar missing at ', h.ts_to_dt(f.time))
 
-            print('here ', ll_base)
+            #print('here ', ll_base)
             
             if 'v_lidar' in f.measurements and ll_base >= 0 and len(f.measurements["v_lidar"]) > 0:
                 v_lidar = f.measurements["v_lidar"]
@@ -649,6 +650,8 @@ class cloud():
                     #print(it, idx, mx_ind+idx)
                     if not v_lidar['mask'][it, mx_ind+idx]:
                         v_base.append(v_lidar['var'][it, mx_ind+idx])
+                        #print('v', v_lidar['var'][it, mx_ind+idx])
+                        #print('a',a_lidar['var'][it, mx_ind+idx])
                         # sometimes rg is only a float
                         if isinstance(v_lidar['rg'], np.ndarray):
                             rg = v_lidar['rg'][mx_ind+idx]
@@ -665,6 +668,7 @@ class cloud():
         v_base=np.array(v_base)
         v_base=v_base[v_base != 0]
         v_base=v_base[v_base != None]
+        print(v_base)
 
         if len(v_base)>0:
             v_mean=np.mean(v_base)
@@ -786,7 +790,7 @@ class cloud():
 
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
                 mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
-                print(type(mask), mask.dtype, mask.data)
+                #print(type(mask), mask.dtype, mask.data)
                 values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
 
 

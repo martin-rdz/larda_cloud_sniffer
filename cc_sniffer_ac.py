@@ -430,7 +430,6 @@ if __name__ == "__main__":
         print('loading ', k, v)
         data[k] = larda.read("CLOUDNET", v, time_interval, [0, 'max'])
         data[k]['var'] = data[k]['var'].data.astype(np.float64)
-        data[k]['mask'] = data[k]['mask'].data
 
     def calc_snr(data):
         var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
@@ -442,7 +441,6 @@ if __name__ == "__main__":
     data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
     data["LDR"]['var'] = data["LDR"]['var'].data.astype(np.float64)
     #data["LDR"]['mask'] = data["LDR"]['mask'].data
-    data["LDR"]['mask'] = data["LDR"]['mask'].data
     def calc_Zcx(data):
         Z = data[0]
         LDR = data[1]
@@ -464,33 +462,29 @@ if __name__ == "__main__":
     try:
         data["qbsc"] = larda_rsd2.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
         data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
-        #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
-        data["qbsc"]['mask'] = data["qbsc"]['mask'].data
         qbsc_present = True
     except:
         traceback.print_exc()
         print('quasibackscatter not available from lacros polly')
 
 
-    if campaign == 'lacros_leipzig':
+    time_interval = [begin_dt-datetime.timedelta(minutes=5), end_dt]
+    if campaign == 'lacros_leipzig' and not qbsc_present:
         try:
             data["qbsc"] = larda_polly_ari.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
             data["qbsc"]['var'] = data['qbsc']['var'].data.astype(np.float64)
-            #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
-            data["qbsc"]['mask'] = data["qbsc"]['mask'].data
             qbsc_present = True
         except:
             traceback.print_exc()
             print('quasibackscatter not available from arielle')
-        try:
-            data["qbsc"] = larda_polly_ift.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
-            data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
-            #data["qbsc"]['mask'] = data["qbsc"]['mask'].data
-            data["qbsc"]['mask'] = data["qbsc"]['mask'].data
-            qbsc_present = True
-        except:
-            traceback.print_exc()
-            print('quasibackscatter not available from polly ift')
+        if not qbsc_present:
+            try:
+                data["qbsc"] = larda_polly_ift.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
+                data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
+                qbsc_present = True
+            except:
+                traceback.print_exc()
+                print('quasibackscatter not available from polly ift')
 
     #try:
     #    data["voldepol"] = larda.read("CLOUDNET","depol",time_interval, [0,'max'])
@@ -501,38 +495,37 @@ if __name__ == "__main__":
     try:
         voldepol = larda_rsd2.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
         voldepol['var'] = voldepol['var'].data.astype(np.float64)
-        #voldepol['mask'] = voldepol['mask'].data
-        voldepol['mask'] = voldepol['mask'].data
         lidar_present=True
     except:
         traceback.print_exc()
-        print("No lidar data found, continue with lidar_present=False")
+        print("No lidar data found pollyxt_lacros")
 
-    if campaign == 'lacros_leipzig':
+    if campaign == 'lacros_leipzig' and not lidar_present:
         try:
             voldepol = larda_polly_ari.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
             voldepol['var'] = voldepol['var'].data.astype(np.float64)
-            #voldepol['mask'] = voldepol['mask'].data
-            voldepol['mask'] = voldepol['mask'].data
             lidar_present=True
         except:
             traceback.print_exc()
-            print('quasibackscatter not available from arielle')
-        try:
-            voldepol = larda_polly_ift.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
-            voldepol['var'] = voldepol['var'].data.astype(np.float64)
-            #voldepol['mask'] = voldepol['mask'].data
-            voldepol['mask'] = voldepol['mask'].data
-            lidar_present=True
-        except:
-            traceback.print_exc()
-            print('quasibackscatter not available from polly ift')
+            print('voldepol not available from arielle')
+        if not lidar_present:
+            try:
+                voldepol = larda_polly_ift.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
+                voldepol['var'] = voldepol['var'].data.astype(np.float64)
+                lidar_present=True
+            except:
+                traceback.print_exc()
+                print('voldepol not available from polly ift')
 
     if lidar_present:
+        voldepol['var'][~np.isfinite(voldepol['var'])] = 0.0
+        voldepol['mask'] = np.logical_or(voldepol['mask'], ~np.isfinite(voldepol['var']))
         data['voldepol'] = pyLARDA.Transformations.interpolate2d(
             voldepol, new_time=data['cc']['ts'], new_range=data['cc']['rg'])
 
     if qbsc_present:
+        data['qbsc']['var'][~np.isfinite(data['qbsc']['var'])] = 0.0
+        data['qbsc']['mask'] = np.logical_or(data['qbsc']['mask'], ~np.isfinite(data['qbsc']['var']))
         qbsc_interp = pyLARDA.Transformations.interpolate2d(
             data['qbsc'], new_time=data['cc']['ts'], new_range=data['cc']['rg'])
         def calc_ice_qext(datalist):
@@ -555,6 +548,7 @@ if __name__ == "__main__":
         data["ratio_z_e"] = pyLARDA.Transformations.combine(
             calc_z_e, [data['Z'], ice_qext], 
             {'var_unit': 'm mm^-6', 'var_lims': [1e-0,3e3], 'name': 'Z/E'})
+
 
     #new_ldr_mask = np.logical_or(data['Zcx']['var'] < h.z2lin(-37), data['Zcx']['var'] > (data['Z']['var']-h.z2lin(-32)))
     #data['LDRcorr'] = {**data['LDR']}
@@ -579,8 +573,10 @@ if __name__ == "__main__":
         data["a_lidar"] = larda.read("SHAUN","beta_raw",time_interval, [0,'max'])
         data["v_lidar"]['var'] = data['v_lidar']['var'].data.astype(np.float64)
         data['a_lidar']['var'] = data['a_lidar']['var'].data.astype(np.float64)
-        data["v_lidar"]['mask'] = data["v_lidar"]['mask'].data
-        data['a_lidar']['mask'] = data['a_lidar']['mask'].data
+        data["v_lidar"]['mask'] = np.logical_or(data["v_lidar"]['mask'],
+                                                np.isclose(data['v_lidar']['var'], -999))
+        data["a_lidar"]['mask'] = np.logical_or(data["a_lidar"]['mask'],
+                                                np.isclose(data['a_lidar']['var'], -999))
         #v_lidar.abs_reference(a_lidar, 0.1e9)
         doppler_present=True
     except:

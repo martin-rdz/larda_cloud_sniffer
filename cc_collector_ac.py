@@ -76,7 +76,7 @@ for i in range(len(clouds)):
             
             begin=datetime.datetime.utcfromtimestamp(clouds[i].begin_time)
             end=datetime.datetime.utcfromtimestamp(clouds[i].end_time)
-            middle=begin+datetime.timedelta(seconds=clouds[i].end_time-clouds[i].begin_time)
+            middle=begin+datetime.timedelta(seconds=(clouds[i].end_time-clouds[i].begin_time)/2.)
 
             clouds[i].validate_features()
 
@@ -164,10 +164,10 @@ for i in range(len(clouds)):
             output["Z_values"]=list(np.histogram(10*np.log10(z_vals),90,(-70.0,20))[0])
 
             output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"]=clouds[i].separation_average("ratio_z_e",sep)
-            #print('ZE_TOP_stat ', output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"])
+            print('ZE_TOP_stat ', output["ZE_TOP_AVG"],output["ZE_TOP_MED"],output["ZE_TOP_STD"],output["ZE_TOP_N"])
             output["ZE_AVG"],output["ZE_MED"],output["ZE_STD"],output["ZE_N"]=clouds[i].average("ratio_z_e",ice_only)
-            #print('ZE_stat ', output["ZE_AVG"],output["ZE_MED"],output["ZE_STD"],output["ZE_N"])
-
+            print('ZE_stat ', output["ZE_AVG"],output["ZE_MED"],output["ZE_STD"],output["ZE_N"])
+            
             output["SNR_TOP_AVG"],output["SNR_TOP_MED"],output["SNR_TOP_STD"],output["SNR_TOP_N"]=clouds[i].separation_average("SNR",sep)
 
             output["width_AVG"],output["width_MED"],output["width_STD"],output["width_N"]=clouds[i].average("width",ice_only)
