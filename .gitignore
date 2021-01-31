@@ -5,3 +5,7 @@ local_*
 *.dat
 *.dat.bak
 *.bak
+plots/*
+cloud_collections/*
+cloud_properties/*
+!*.gitkeep
