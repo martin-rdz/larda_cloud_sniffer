@@ -4,3 +4,4 @@ __pycache__/
 local_*
 *.dat
 *.dat.bak
+*.bak

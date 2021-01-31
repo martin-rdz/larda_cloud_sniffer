@@ -24,6 +24,31 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print("starting sniffer {} {}".format(args.campaign, args.date))
 
+
+# default settings
+# ====================================
+MAX_VERT_GAP = 3
+
+CONN_THRES_LAYERED = {
+    'h_thres': 4000.0, 'v_thres': 200.0
+}
+
+CONN_THRES_ICE = {
+    'h_thres': 5000.0, 'v_thres': 500.0
+}
+
+CONN_THRES_TOWER = {
+    'h_thres': 5000.0, 'v_thres': 500.0
+}
+
+#minimum height of a cloud feature to be classified as part of a 
+# cumulus congestus or nimbostratus cloud
+MIN_TOWER_HEIGHT = 2000
+
+THRES_SHALLOW_PREC = 4000
+# ====================================
+
+
 def unmask(cloudnet_profile):
     
     cloudnet_profile[cloudnet_profile==999]=0
@@ -37,6 +62,7 @@ def unmask(cloudnet_profile):
             
 
 def translate_bit(bit):
+    """get the string from the bit"""
     
     cn_bit_names=dict(enumerate([
         "Clear Sky","Cloud droplets only","Drizzle or rain","Drizzle/rain & cloud droplets",
@@ -47,7 +73,10 @@ def translate_bit(bit):
 
 
 def bounds_of_runs(array, maxstepsize=1):
-    """ [ 0,  1,  9, 10, 11, 14, 15, 16] => [[0, 1], [ 9, 11], [14, 16]]"""
+    """transfer a list of indices in to nested list of the boudaries of runs
+
+    [ 0,  1,  9, 10, 11, 14, 15, 16] => [[0, 1], [ 9, 11], [14, 16]]
+    """
     if len(array) > 0:
         bounds = [[e[0], e[-1]] for e in \
             np.split(array, np.where(np.diff(array) > maxstepsize)[0]+1)]
@@ -56,19 +85,21 @@ def bounds_of_runs(array, maxstepsize=1):
     return bounds
 
 
-
 def search(elements,target):
+    """check if element contains any target"""
     hit=[]
     for e in np.ravel(elements):
         hit.append(np.any(e in target))
     #print('elements, target, hit', elements, target, hit)
     return np.any(hit)
 
+
 def save_object(dump_object,filename):
     
     dump=open(filename,'wb')
     pickle.dump(dump_object,dump,pickle.HIGHEST_PROTOCOL)
     dump.close()
+
     
 def load_object(filename):
     
@@ -76,26 +107,43 @@ def load_object(filename):
     
     return pickle.load(dump)
 
-def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,profile_time_length=30,advection_speed=10,temporal_search_range=10,cloud_type="none"):
+def connect_features(detected_features, 
+    h_thres=None, v_thres=None, 
+    profile_time_length=30, advection_speed=10, temporal_search_range=10, 
+    cloud_type="none", verbose=False):
+    """connect features (chunks of single profiles based on the thresholds)
+
+    Args:
+        detected_features: list of detected features
+        h_thres: horizontal threshold in [m] 
+        v_thres: vertical threshold in [m]
+        profile_time_length: default 30s 
+        advection_speed: default 10 [m/s]
+        temporal_search_range: default 10
+        cloud_type: string identifying cloud type
+    """
 
     #connect mixed-phase features
-    pl=profile_time_length #temporal profile length [s]
-    c=advection_speed #advection speed [m/s]
-    d=temporal_search_range #temporal search range
+    d = temporal_search_range #temporal search range [no. profiles?]
 
     cloud_counter=0
     found_clouds=[]
+    
+    assert h_thres is not None
+    assert v_thres is not None
+    assert profile_time_length*advection_speed*2*temporal_search_range \
+        > h_thres, "search window smaller than threshold"
 
     found_clouds.append(clouds.cloud())
     found_clouds[-1].cloud_type=cloud_type
     # go through all features, but with kind of a -d,d sliding window
+    print('number features ', len(detected_features), d)
     for i in range(d,len(detected_features)-d): 
-        print(i, "out of", d, len(detected_features)-d)
+        print(i, "out of", d, len(detected_features)-d) if verbose else None
         #read current feature
         f0=detected_features[i]
 
         connections=[]
-        
         #read features adjacent in the list
         for n in range(-d,d):
             if n==0:
@@ -104,9 +152,9 @@ def connect_features(detected_features,h_threshold=4000.0,v_threshold=200.0,prof
             f1=detected_features[i+n]
 
             v_dist=np.abs(f0.top_range - f1.top_range)
-            h_dist=np.abs(c*(f0.time-f1.time))
-            #print('v_dist', v_dist, "h_dist", h_dist, v_threshold, h_threshold)
-            if v_dist<v_threshold and h_dist<h_threshold:
+            h_dist=np.abs(advection_speed*(f0.time-f1.time))
+            #print('v_dist', v_dist, "h_dist", h_dist, v_threshold, h_thres)
+            if v_dist<v_thres and h_dist<h_thres:
                 #print('found feature close to', i, i+n) 
                 # none of the features is assign to a cloud
                 if f0.cloud_system==-1 and f1.cloud_system==-1:
@@ -147,8 +195,6 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
     
     """
 
-    min_tower_height=1000.0 #minimum height of a cloud feature to be classified as part of a cumulus congestus or nimbostratus cloud
-
     #classfication profile
 
     #if ~np.any(cc_profile==1) and ~np.any(cc_profile==3):
@@ -164,11 +210,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
     indices_cloud = np.where(np.isin(profiles['cc']['var'], clouds.cloud_particles))[0]
     # original comment: Possible gap between a liquid cloud base and radar precipitation below [Cloudnet height steps]
     # 1. option: bridge everything up to 5 bins
-    bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=5)
-    # 2. option: bridge up to 5 bins only if top is liquid
-    bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=1)
-    # 3. option: combine both
-    bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=3)
+    bounds_feature = bounds_of_runs(indices_cloud, maxstepsize=MAX_VERT_GAP)
     merge_after = []
     # find bounds that fulfill the cond and save the index
     for i, [lower, upper] in enumerate(zip(bounds_feature, bounds_feature[1::])):
@@ -240,7 +282,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
         ice_present = search(clouds.ice,f.classifications)
         liquid_present = search(clouds.liquid,f.classifications)
         melting_present = search(clouds.melting,f.classifications)
-        print("ice, liquid, melting", ice_present, liquid_present, melting_present) 
+        print("ice, liquid, melting", ice_present, liquid_present, melting_present) if verbose else None 
         #discriminate feature types
         ignore_assert = False
         if ice_present and not(liquid_present) and not(melting_present):
@@ -265,7 +307,7 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
         
         elif melting_present and ice_present and not(liquid_present):
         
-            if f.top_range - f.base_range < min_tower_height:
+            if f.top_range - f.base_range < MIN_TOWER_HEIGHT:
                 f.type="pure_ice"
             else:
                 f.type="tower"
@@ -288,8 +330,6 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             indices_liquid = np.where(np.isin(feature_cc, clouds.liquid))[0]
             bounds_liquid = bounds_of_runs(indices_liquid, maxstepsize=1)
             print(bounds_liquid) if verbose else None
-
-            
 
             if feature_cc[0] in clouds.liquid:
                 f.type = 'liquid-based'
@@ -323,13 +363,13 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             print('precip_top ', f.precipitation_top) if verbose else None
 
             # tower is more important than the categories above
-            if f.top_range-min(f.liquid_layer_base) > min_tower_height:
+            if f.top_range-min(f.liquid_layer_base) > MIN_TOWER_HEIGHT:
                 f.type="tower"
 
             #if f.type != 'liquid-based': # for some reason there are as many liquid layers as bins in feature
             #    assert f.liquid_layers == len(bounds_liquid)
             #input()
-        print('final classification', f.type)
+        print(f"final class of feature {f.type}, ({h.ts_to_dt(f.time).strftime('%Y%m%d-%H%M%S')} {f.base_range:.2f})")
 
     #if f.type == 'tower':
     #    input()
@@ -365,7 +405,7 @@ def features_to_simple_class(features_in_profile):
     #print('precip ', len(rain))
     if rain:
         #print([(f.base_range, f.top_range) for f in rain])
-        if rain[-1].top_range - rain[-1].base_range >= 4000:
+        if rain[-1].top_range - rain[-1].base_range >= THRES_SHALLOW_PREC:
             return 'rain_deep'
         else:
             return 'rain_shallow'
@@ -708,25 +748,30 @@ if __name__ == "__main__":
                 detected_features_tower.append(f)
 
     print("Searching for layered clouds")
-    clouds_mixed=connect_features(detected_features_mixed,
-                                h_threshold=4000.0,v_threshold=200.0,cloud_type="layered")
+    clouds_mixed=connect_features(
+        detected_features_mixed, cloud_type="layered", **CONN_THRES_LAYERED)
     #clouds_mixed = []
     print("Searching for cirrus (pure ice) clouds")
     #
     # 10000 as h_threshold seems a littlebit too much
-    clouds_ice=connect_features(detected_features_ice,h_threshold=5000.0,v_threshold=500,cloud_type="ice")
+    clouds_ice=connect_features(
+        detected_features_ice, cloud_type="ice", **CONN_THRES_ICE)
     print("Searching for deep clouds")
-    clouds_tower=connect_features(detected_features_tower,h_threshold=5000.0,v_threshold=500.0,cloud_type="tower")
+    clouds_tower=connect_features(
+        detected_features_tower, cloud_type="tower", **CONN_THRES_TOWER)
     #clouds_tower = []
 
     all_clouds = clouds_mixed + clouds_ice + clouds_tower
     print("Saving")
-    save_object(all_clouds,'../cloud_properties/cloud_properties_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_clouds.dat')
+    save_object(all_clouds,
+        '../cloud_properties/cloud_properties_'+campaign+'/'\
+        +begin_dt.strftime("%Y_%m_%d")+'_clouds.dat')
 
     #save the profile wise classification
     class_counter = Counter(simple_class)
     profile_classes = ['clear', 'rain_deep', 'rain_shallow',
-            'single_layer_pure_liquid', 'single_layer_pure_ice', 'single_layer_mixed-phase',
+            'single_layer_pure_liquid', 'single_layer_pure_ice', 
+            'single_layer_mixed-phase',
             'multi_layer_various', 'multi_layer_mostly_pure_liquid', 
             'multi_layer_mostly_pure_ice', 'multi_layer_mostly_mixed-phase' ]
 
@@ -753,8 +798,6 @@ if __name__ == "__main__":
             continue
         
         c_type=cloud.most_common_type()
-        print("cloud type ", cloud.cloud_type)
-        print("len of feature", len(cloud.features))
         #clouds[i].type=c_type
         if c_type=="pure_liquid":
             color='blue'
@@ -770,6 +813,9 @@ if __name__ == "__main__":
             color='gray'
         
         cg = cloud.geometry()
+
+        print(f"cloud type {cloud.cloud_type:>10s} number of features {len(cloud.features):>5}  \
+{h.ts_to_dt(cg[0]).strftime('%Y%m%d-%H%M')} + {cg[2]:7.2f} | {cg[1]:7.2f} + {cg[3]:7.2f}")
         #if clouds[i].top_variation()<200.0 and clouds[i].time_length()>1800 and clouds[i].cloud_top_thickness()[0]<400.0 and  clouds[i].fill_factor()>0.75:
         #if c_type=="tower":
         if cloud.time_length()>900 and cloud.fill_factor()>0.60:
@@ -778,7 +824,7 @@ if __name__ == "__main__":
     fig, ax = lT.plot_timeheight(data['cc'], range_interval=[0, 12000])
     import matplotlib.patches as patches
     for cm in cloud_rectangles:
-        print(cm)
+        print(f"plot {h.ts_to_dt(cm[0]).strftime('%Y%m%d-%H%M')} + {cm[2]:7.2f} | {cm[1]:7.2f} + {cm[3]:7.2f}")
         begin = h.ts_to_dt(cm[0])
         duration=datetime.timedelta(seconds=cm[2])
         rect = patches.Rectangle(
@@ -790,6 +836,4 @@ if __name__ == "__main__":
 
     savename='../plots/cloud_overview_'+campaign+'/'+begin_dt.strftime("%Y_%m_%d")+'_cloud_detection.png'
     fig.savefig(savename, dpi=250)
-
-
 

@@ -21,30 +21,47 @@ set -o pipefail
 #done
 
 i="20181128"
-i="20190111"
-i="20190126"
-i="20190327"
-i="20190501"
-i="20190605"
+# 20190520 causes issues
+i="20190522"
+i="20190601"
+# 20190714 causes issues
 i="20190715"
-i="20190923"
-i="20191207"
-i="20191215"
+# 20191105 causes issues
+# the missing november 2019
+i="20191206"
+# 20191226 causes issues
 i="20200105"
+# 20200122 causes issues
 i="20200123"
-i="20200125"
-i="20200128"
-i="20200205"
-i="20200212"
-i="20200218"
+# 20200302 causes issues
 i="20200304"
-i="20200309"
-i="20200312"
-#i="20191028"
-#skip the 25jan
-#i="20190201"
-cat  avail_dates_lacros_dacapo_interim.dat | while read i || [[ -n $i ]]; do
-#while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20200630" +%Y%m%d)" ]; do
+# 20200323 causes issues
+i="20200331"
+# 20200426 causes issues
+# the missing may 2020
+i="20200603"
+# 20200622 causes issues
+i="20200629"
+
+# 20200704 causes issues
+i="20200706"
+# 20200722 causes issues
+i="20200724"
+# 20200822 causes issues
+i="20200906"
+# 20200924 causes issues
+i="20200930"
+# 20201124 causes issues
+i="20201214"
+# 20201228 strictly increasing error
+i="20201229"
+
+
+file="avail_dates_lacros_dacapo_interim.dat"
+file="avail_dates_lacros_dacapo_new.dat"
+
+cat ${file}  | while read i || [[ -n $i ]]; do
+#while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20210101" +%Y%m%d)" ]; do
     echo ${i}
     #python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
     python3 cc_collector_ac.py --campaign lacros_dacapo --date $i

@@ -55,6 +55,7 @@ cat avail_dates_lacros_leipzig.dat | while read i || [[ -n $i ]]; do
     if [[ "$i" != *"#"* ]]; then
        	python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
         python3 cc_collector_ac.py --campaign lacros_leipzig --date $i
+	#exit 5
     fi
     #i=$(date -d "$i + 1 day" +%Y%m%d)
 done
