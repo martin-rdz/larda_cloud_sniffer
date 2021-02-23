@@ -469,7 +469,7 @@ if __name__ == "__main__":
     for k,v in var_shortcuts.items():
         print('loading ', k, v)
         data[k] = larda.read("CLOUDNET", v, time_interval, [0, 'max'])
-        data[k]['var'] = data[k]['var'].data.astype(np.float64)
+        #data[k]['var'] = data[k]['var'].data.astype(np.float64)
 
     def calc_snr(data):
         var = h.lin2z(data['var']) + 10*(-2.*np.log10(data['rg']) + 2.*np.log10(5000.) - np.log10(0.00254362123253))
@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
     #try:
     data["LDR"] = larda.read("CLOUDNET","LDR",time_interval, [0,'max'])
-    data["LDR"]['var'] = data["LDR"]['var'].data.astype(np.float64)
+    #data["LDR"]['var'] = data["LDR"]['var'].data.astype(np.float64)
     #data["LDR"]['mask'] = data["LDR"]['mask'].data
     def calc_Zcx(data):
         Z = data[0]
@@ -501,18 +501,17 @@ if __name__ == "__main__":
 
     try:
         data["qbsc"] = larda_rsd2.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
-        data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
+        #data["qbsc"]['var'] = data["qbsc"]['var'].data.astype(np.float64)
         qbsc_present = True
     except:
         traceback.print_exc()
         print('quasibackscatter not available from lacros polly')
 
-
     time_interval = [begin_dt-datetime.timedelta(minutes=5), end_dt]
     if campaign == 'lacros_leipzig' and not qbsc_present:
         try:
             data["qbsc"] = larda_polly_ari.read("POLLYNET","qbsc532",time_interval, [0, 'max'])
-            data["qbsc"]['var'] = data['qbsc']['var'].data.astype(np.float64)
+            #data["qbsc"]['var'] = data['qbsc']['var'].data.astype(np.float64)
             qbsc_present = True
         except:
             traceback.print_exc()
@@ -534,7 +533,7 @@ if __name__ == "__main__":
     #    print("No lidar data found, continue with lidar_present=False")
     try:
         voldepol = larda_rsd2.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
-        voldepol['var'] = voldepol['var'].data.astype(np.float64)
+        #voldepol['var'] = voldepol['var'].data.astype(np.float64)
         lidar_present=True
     except:
         traceback.print_exc()
@@ -543,7 +542,7 @@ if __name__ == "__main__":
     if campaign == 'lacros_leipzig' and not lidar_present:
         try:
             voldepol = larda_polly_ari.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
-            voldepol['var'] = voldepol['var'].data.astype(np.float64)
+            #voldepol['var'] = voldepol['var'].data.astype(np.float64)
             lidar_present=True
         except:
             traceback.print_exc()
@@ -551,7 +550,7 @@ if __name__ == "__main__":
         if not lidar_present:
             try:
                 voldepol = larda_polly_ift.read("POLLYNET","voldepol532",time_interval, [0, 'max'])
-                voldepol['var'] = voldepol['var'].data.astype(np.float64)
+                #voldepol['var'] = voldepol['var'].data.astype(np.float64)
                 lidar_present=True
             except:
                 traceback.print_exc()
@@ -572,9 +571,10 @@ if __name__ == "__main__":
             qext = datalist[0]['var']*32
             mask = np.logical_or(qext < 1e-10, datalist[0]['mask'])
             return qext, mask
-        ice_qext = pyLARDA.Transformations.combine(
+        data['qiceext'] = pyLARDA.Transformations.combine(
             calc_ice_qext, [qbsc_interp], 
             {'var_unit': 'm^-1', 'var_lims': [5e-6,1e-2], 'name': 'ice qext'})
+        data['qbsc'] = qbsc_interp
     
         def calc_z_e(datalist):
             assert np.all(datalist[0]['ts'] == datalist[1]['ts'])
@@ -586,7 +586,7 @@ if __name__ == "__main__":
             return ratio, mask
     
         data["ratio_z_e"] = pyLARDA.Transformations.combine(
-            calc_z_e, [data['Z'], ice_qext], 
+            calc_z_e, [data['Z'], data['qiceext']], 
             {'var_unit': 'm mm^-6', 'var_lims': [1e-0,3e3], 'name': 'Z/E'})
 
 
@@ -611,8 +611,8 @@ if __name__ == "__main__":
     try:
         data["v_lidar"] = larda.read("SHAUN","VEL",time_interval, [0,'max'])
         data["a_lidar"] = larda.read("SHAUN","beta_raw",time_interval, [0,'max'])
-        data["v_lidar"]['var'] = data['v_lidar']['var'].data.astype(np.float64)
-        data['a_lidar']['var'] = data['a_lidar']['var'].data.astype(np.float64)
+        #data["v_lidar"]['var'] = data['v_lidar']['var'].data.astype(np.float64)
+        #data['a_lidar']['var'] = data['a_lidar']['var'].data.astype(np.float64)
         data["v_lidar"]['mask'] = np.logical_or(data["v_lidar"]['mask'],
                                                 np.isclose(data['v_lidar']['var'], -999))
         data["a_lidar"]['mask'] = np.logical_or(data["a_lidar"]['mask'],
@@ -693,6 +693,8 @@ if __name__ == "__main__":
 
         if qbsc_present:
             profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
+            profiles['qbsc'] = lT.slice_container(data['qbsc'], index={'time': [i]})
+
 
     #    if windprofiler_present:
     #        wp_timebin=wp_vel.get_time_bin(Z.times[i])
@@ -720,6 +722,7 @@ if __name__ == "__main__":
             keys_to_feature += ["voldepol"]
         if qbsc_present:
             keys_to_feature += ['ratio_z_e']
+            keys_to_feature += ['qbsc']
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
         

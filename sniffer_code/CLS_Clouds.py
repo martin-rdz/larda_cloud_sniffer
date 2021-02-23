@@ -668,7 +668,7 @@ class cloud():
         v_base=np.array(v_base)
         v_base=v_base[v_base != 0]
         v_base=v_base[v_base != None]
-        print(v_base)
+        print('v_base', v_base)
 
         if len(v_base)>0:
             v_mean=np.mean(v_base)
@@ -735,7 +735,7 @@ class cloud():
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
                 iwc_top.append(f.measurements["IWC"]['var'][f.precipitation_top-spacing])
                 if np.sum(f.measurements["LWC"]['var'])>0:
-                    print(f.measurements["LWC"]['var'], f.measurements["LWC"]['mask'])
+                    #print('lwc', f.measurements["LWC"]['var'], f.measurements["LWC"]['mask'])
                     lwc_top.append(np.average(f.measurements["LWC"]['var'][f.measurements["LWC"]['var']!=0]))
                 else:
                     lwc_top.append(0)
@@ -743,10 +743,15 @@ class cloud():
         iwc_top=np.array(iwc_top)
         lwc_top=np.array(lwc_top)
 
+
         if len(lwc_top!=0)>0:
             ilcr=iwc_top[lwc_top!=0]/lwc_top[lwc_top!=0]
         else:
             ilcr=[0]
+
+        print('at ilr; iwc, lwc, ilcr average', 
+              np.average(iwc_top), np.average(lwc_top), 
+              np.average(ilcr))
 
         #n_ice=len(ilcr>0.9)/float(len(ilcr))
         #n_liq=len(ilcr<0.1)/float(len(ilcr))
@@ -789,7 +794,7 @@ class cloud():
             #print('cc_profile', f.classifications )
 
             if f.precipitation_top!=-1 and f.precipitation_top-spacing>0:
-                mask = f.measurements[name]['mask'][f.precipitation_top-spacing]
+                mask = f.measurements[name]['mask'][f.precipitation_top-spacing].astype(bool)
                 #print(type(mask), mask.dtype, mask.data)
                 values += f.measurements[name]['var'][f.precipitation_top-spacing][~mask].tolist()
 
@@ -905,6 +910,7 @@ class cloud():
         lwp=np.array(lwp)
         lwp_s=np.array(lwp_s)
         iwp=np.array(iwp)
+        print('paths lwp, lwp_s', lwp, lwp_s)
 
         if lwp!=[] and ~np.all(lwp==0) and len(lwp[lwp_s!=0])>0:
             lwp_average=np.average(lwp[lwp_s!=0])
@@ -922,6 +928,8 @@ class cloud():
         else:
             iwp_average=0
             iwp_std=0
+
+        print('path averages ', lwp_average, lwp_s_average, iwp_average)
 
         return lwp_average, lwp_s_average, iwp_average, iwp_std
 

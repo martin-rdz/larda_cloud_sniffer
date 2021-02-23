@@ -178,6 +178,12 @@ for i in range(len(clouds)):
             output["alpha_Hogan_AVG"],output["alpha_Hogan_MED"],output["alpha_Hogan_STD"],output["alpha_Hogan_N"]=clouds[i].average("alpha_hogan",ice_only)
             output["alpha_Hogan_TOP_AVG"],output["alpha_Hogan_TOP_MED"],output["alpha_Hogan_TOP_STD"],output["alpha_Hogan_TOP_N"]=clouds[i].separation_average("alpha_hogan",sep)
             output["beta_AVG"],output["beta_MED"],output["beta_STD"],output["beta_N"]=clouds[i].average("beta",ice_only)
+
+            # lidar variables from pollynet
+            output["qbscice_TOP_AVG"],output["qbscice_TOP_MED"],output["qbscice_TOP_STD"],output["qbscice_TOP_N"]=clouds[i].separation_average("qbsc",sep)
+            output["qbsc_drop_AVG"],output["qbsc_drop_MED"],output["qbsc_drop_STD"],output["qbsc_drop_N"]=clouds[i].average("qbsc",droplets_only)
+            # TODO add qiceext
+    
             output["delta_AVG"],output["delta_MED"],output["delta_STD"],output["delta_N"]=clouds[i].average("voldepol",ice_only)
             output["voldepol_AVG"],output["voldepol_MED"],output["voldepol_STD"],output["voldepol_N"]=clouds[i].average("voldepol",ice_only)
             
@@ -233,11 +239,6 @@ for i in range(len(clouds)):
 
             #print(clouds[i].cloud_type,output["Z_top"])
 
-            if int(output["A_Unique_Identifier"])==201207172309455452:
-                print(output["A_Unique_Identifier"])
-                for n in range(len(vv_values)):
-                    #print clouds[i].n_valid, clouds[i].n_invalid
-                    print(n, vv_values[n])
 
             #output["adv_wind_profiler"],output["std_wind_profiler"],output["max_wind_profiler"],output["min_wind_profiler"],output["dvdh_wind_profiler"]=clouds[i].horizontal_wind(output["CTH"],4)
             #if len(clouds[i].features)>100:
