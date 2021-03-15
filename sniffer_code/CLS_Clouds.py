@@ -681,6 +681,19 @@ class cloud():
 
         return v_mean,v_std,v_n,v_base,locations_of_vel
 
+    def no_node_hist(self):
+        """
+
+
+        Returns:
+        """
+        no_nodes=[]
+
+        for f in self.features:
+            var = f.measurements["pT_no"]['var'].ravel()
+            print('pT_no', var)
+
+        return None
 
 
     def horizontal_wind(self, cth, h_range):

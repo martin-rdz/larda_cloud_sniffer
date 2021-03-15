@@ -30,7 +30,9 @@ if __name__ == "__main__":
 MAX_VERT_GAP = 3
 
 CONN_THRES_LAYERED = {
-    'h_thres': 4000.0, 'v_thres': 200.0
+    # try with 3000 = 5min as threshold, otherwise
+    # there will be connections over the scans
+    'h_thres': 3000.0, 'v_thres': 200.0
 }
 
 CONN_THRES_ICE = {
@@ -458,6 +460,8 @@ if __name__ == "__main__":
     qbsc_present=False
     windprofiler_present=False
     corrected_tfv_present=False
+    peakTree_present=False
+
 
     var_shortcuts = {"cc": "CLASS", "LWC_S": "LWC_S", "LWC": "LWC",
             "IWC": "IWC",
@@ -618,10 +622,18 @@ if __name__ == "__main__":
         data["a_lidar"]['mask'] = np.logical_or(data["a_lidar"]['mask'],
                                                 np.isclose(data['a_lidar']['var'], -999))
         #v_lidar.abs_reference(a_lidar, 0.1e9)
-        doppler_present=True
+        doppler_present = True
     except:
         traceback.print_exc()
         print("No SHAUN data found, continue with doppler_present=False")
+
+
+    try:
+        data["pT_no"] = larda.read("peakTree","no_nodes",time_interval, [0,'max'])
+        peakTree_present = True
+    except:
+        traceback.print_exc()
+        print("No peakTree data found, continue with peakTree_present=False")
 
     #try:
     #    wp_vel=larda.read("WIPRO_ADV",begin-3600,end+3600)
@@ -691,6 +703,14 @@ if __name__ == "__main__":
                 profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
                         index={'time': [it_b_dl, it_e_dl]})
 
+        if peakTree_present:
+            it_b_pT = h.argnearest(data["pT_no"]['ts'], data["cc"]["ts"][i]-15)
+            it_e_pT = h.argnearest(data["pT_no"]['ts'], data["cc"]["ts"][i]+15)
+            if not it_b_dl == it_e_dl:
+                print("peakTree not available for this profile", i)
+                profiles['pT_no'] = lT.slice_container(data['pT_no'], 
+                        index={'time': [it_b_pT, it_e_pT]})
+
         if qbsc_present:
             profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
             profiles['qbsc'] = lT.slice_container(data['qbsc'], index={'time': [i]})
@@ -723,6 +743,8 @@ if __name__ == "__main__":
         if qbsc_present:
             keys_to_feature += ['ratio_z_e']
             keys_to_feature += ['qbsc']
+        if peakTree_present:
+            keys_to_feature += ['pT_no']
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
         

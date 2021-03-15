@@ -9,3 +9,4 @@ plots/*
 cloud_collections/*
 cloud_properties/*
 !*.gitkeep
+analysis_code/*

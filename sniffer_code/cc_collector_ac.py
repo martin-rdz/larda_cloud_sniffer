@@ -215,6 +215,8 @@ for i in range(len(clouds)):
             output["v_dl_period_Pxx"] = periodogram[1].tolist()
             output["v_dl_autocor_time"] = autocorr[0].tolist()
             output["v_dl_autocor_coeff"] = autocorr[1].tolist()
+
+            output["pT_no_node_hist"] = clouds[i].no_node_hist()
         
 
             #manually corrected LDR
