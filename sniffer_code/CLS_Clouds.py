@@ -770,10 +770,12 @@ class cloud():
         #n_liq=len(ilcr<0.1)/float(len(ilcr))
         #n_mix=(len(ilcr)-n_ice-n_liq)/float(len(ilcr)
 
+
+        bins = np.logspace(1e-5, 1e0, 20)
         if len(ilcr)>0:
-            histogr=np.histogram(ilcr,10,(0.0,1.0))[0]
+            histogr=np.histogram(ilcr,bins=bins)[0]
         else:
-            histogr=np.repeat(0,10)
+            histogr=np.repeat(0,len(bins))
 
         return np.average(ilcr),np.median(ilcr),len(ilcr),list(histogr)
 
