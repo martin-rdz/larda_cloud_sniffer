@@ -687,13 +687,17 @@ class cloud():
 
         Returns:
         """
-        no_nodes=[]
+
+        no_nodes=np.array([])
 
         for f in self.features:
-            var = f.measurements["pT_no"]['var'].ravel()
-            print('pT_no', var)
+            if 'pT_no' in f.measurements:
+                var = f.measurements["pT_no"]['var'].ravel()
+                no_nodes = np.append(no_nodes, var, axis=0)
+        
+        hist, bins = np.histogram(no_nodes, bins=[0,1,3,5,7,9,11,13,15,17,19,21,23])
 
-        return None
+        return hist.tolist()
 
 
     def horizontal_wind(self, cth, h_range):

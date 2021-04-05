@@ -269,6 +269,12 @@ def find_features_in_profile(profiles, keys_to_feature, verbose=False):
             feature.measurements["a_lidar"] = lT.slice_container(
                     profiles['a_lidar'], index={"range": lidar_range})
 
+        if 'pT_no' in profiles:
+            ir_b_pT = h.argnearest(profiles["pT_no"]["rg"], feature.base_range)
+            ir_t_pT = h.argnearest(profiles["pT_no"]["rg"], feature.top_range)
+            feature.measurements["pT_no"] = lT.slice_container(
+                    profiles['pT_no'], index={"range": [ir_b_pT, ir_t_pT+1]})
+            print(feature.measurements["pT_no"]['var'])
 
         features_in_profile.append(feature)
 
@@ -563,6 +569,7 @@ if __name__ == "__main__":
     if lidar_present:
         voldepol['var'][~np.isfinite(voldepol['var'])] = 0.0
         voldepol['mask'] = np.logical_or(voldepol['mask'], ~np.isfinite(voldepol['var']))
+        print(voldepol['ts'])
         data['voldepol'] = pyLARDA.Transformations.interpolate2d(
             voldepol, new_time=data['cc']['ts'], new_range=data['cc']['rg'])
 
@@ -634,6 +641,7 @@ if __name__ == "__main__":
     except:
         traceback.print_exc()
         print("No peakTree data found, continue with peakTree_present=False")
+        #input()
 
     #try:
     #    wp_vel=larda.read("WIPRO_ADV",begin-3600,end+3600)
@@ -697,19 +705,21 @@ if __name__ == "__main__":
             it_b_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]-15)
             it_e_dl = h.argnearest(data["v_lidar"]['ts'], data["cc"]["ts"][i]+15)
             if not it_b_dl == it_e_dl:
-                print("no doppler lidar for this profile", i)
                 profiles['v_lidar'] = lT.slice_container(data['v_lidar'], 
                         index={'time': [it_b_dl, it_e_dl]})
                 profiles['a_lidar'] = lT.slice_container(data['a_lidar'], 
                         index={'time': [it_b_dl, it_e_dl]})
+            else:
+                print("no doppler lidar for this profile", i)
 
         if peakTree_present:
             it_b_pT = h.argnearest(data["pT_no"]['ts'], data["cc"]["ts"][i]-15)
             it_e_pT = h.argnearest(data["pT_no"]['ts'], data["cc"]["ts"][i]+15)
-            if not it_b_dl == it_e_dl:
-                print("peakTree not available for this profile", i)
+            if not it_b_pT == it_e_pT:
                 profiles['pT_no'] = lT.slice_container(data['pT_no'], 
                         index={'time': [it_b_pT, it_e_pT]})
+            else:
+                print("peakTree not available for this profile", i)
 
         if qbsc_present:
             profiles['ratio_z_e'] = lT.slice_container(data['ratio_z_e'], index={'time': [i]})
@@ -743,8 +753,8 @@ if __name__ == "__main__":
         if qbsc_present:
             keys_to_feature += ['ratio_z_e']
             keys_to_feature += ['qbsc']
-        if peakTree_present:
-            keys_to_feature += ['pT_no']
+        #if peakTree_present:
+        #    keys_to_feature += ['pT_no']
 
         features_in_profile = find_features_in_profile(profiles, keys_to_feature)
         

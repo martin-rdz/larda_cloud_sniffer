@@ -3,7 +3,7 @@
 
 ### sniffer_code
 
-- the cloud sniffer is originally based on BÃ¼Ãhl [2016 ACP]
+- the cloud sniffer is originally based on Bue¼hl [2016 ACP]
 - adapted for the new datasets, additinal measurements, new server and especially larda3
 
 ### cloud_properties
@@ -21,7 +21,7 @@ Created by `python3 cc_collector_ac.py --campaign lacros_dacapo --date 20181128`
 
 
 ### References
-- BÃ¼hl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring ice- and liquid-water properties in mixed-phase cloud layers at the Leipzig Cloudnet station, Atmos. Chem. Phys., 16, 1060-10620, <https://doi.org/10.5194/acp-16-10609-2016>, 2016. 
+- Bue¼¼hl, J., Seifert, P., Myagkov, A., and Ansmann, A.: Measuring ice- and liquid-water properties in mixed-phase cloud layers at the Leipzig Cloudnet station, Atmos. Chem. Phys., 16, 1060-10620, <https://doi.org/10.5194/acp-16-10609-2016>, 2016. 
 
 
 ### License
