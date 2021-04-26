@@ -20,11 +20,15 @@ d="20161018"
 #    d=$(date -d "$d + 1 day" +%Y%m%d)
 #done
 
-cat  avail_dates_lacros_cycare_interim.dat | while read i || [[ -n $i ]]; do
+file="avail_dates_lacros_cycare.dat"
+
+cat ${file} | while read i || [[ -n $i ]]; do
 #while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20200630" +%Y%m%d)" ]; do
     echo ${i}
-    #python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
-    python3 cc_collector_ac.py --campaign lacros_cycare --date $i
+    if [[ "$i" != *"#"* ]]; then
+        #python3 cc_sniffer_ac.py --campaign lacros_cycare --date $i;
+        python3 cc_collector_ac.py --campaign lacros_cycare --date $i
+    fi
     #i=$(date -d "$i + 1 day" +%Y%m%d)
 done
 exit 1

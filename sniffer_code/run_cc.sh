@@ -57,14 +57,21 @@ i="20201214"
 i="20201229"
 
 
+i="20200525"
+
+
 file="avail_dates_lacros_dacapo_interim.dat"
 file="avail_dates_lacros_dacapo_new.dat"
+file="avail_dates_lacros_dacapo_new_inclMay.dat"
 
 cat ${file}  | while read i || [[ -n $i ]]; do
 #while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20210101" +%Y%m%d)" ]; do
+#while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "20200603" +%Y%m%d)" ]; do
     echo ${i}
-    #python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
-    python3 cc_collector_ac.py --campaign lacros_dacapo --date $i
+    if [[ "$i" != *"#"* ]]; then
+        #python3 cc_sniffer_ac.py --campaign lacros_dacapo --date $i;
+        python3 cc_collector_ac.py --campaign lacros_dacapo --date $i
+    fi
     #i=$(date -d "$i + 1 day" +%Y%m%d)
 done
 exit 1

@@ -50,10 +50,12 @@ e="20180807"
 i="20140101"
 e="20180807"
 
-cat avail_dates_lacros_leipzig.dat | while read i || [[ -n $i ]]; do
+file="avail_dates_lacros_leipzig.dat"
+
+cat ${file}  | while read i || [[ -n $i ]]; do
 #while [ "$(date -d "$i" +%Y%m%d)" -lt "$(date -d "$e" +%Y%m%d)" ]; do
     if [[ "$i" != *"#"* ]]; then
-       	python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
+       	#python3 cc_sniffer_ac.py --campaign lacros_leipzig --date $i;
         python3 cc_collector_ac.py --campaign lacros_leipzig --date $i
 	#exit 5
     fi
