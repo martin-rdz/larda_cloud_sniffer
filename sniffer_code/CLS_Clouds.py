@@ -587,6 +587,87 @@ class cloud():
 
         return v_mean,v_std,v_n,v_base,locations_of_vel
 
+    def velocities_fixed_height(self, sample_height):
+        """read the doppler lidar velocities at a fixed height of maximum backscatter
+        [Suggestion by referee2]
+        
+        """
+
+        a_thr=0
+        #a_thr=8e4
+
+        v_base=[]
+        v_base.append(0)
+        locations_of_vel = []
+
+        for f in self.features:
+
+            # 2020-10-12: try without the validity check
+            # if f.valid==False or "v_lidar" not in f.measurements.keys():
+            #     print('no measurements in this feature, valid? ', f.valid)
+            #     continue
+
+            
+            if 'v_lidar' not in f.measurements:
+                print('v_lidar missing at ', h.ts_to_dt(f.time))
+
+            #print('here ', ll_base)
+            
+            if 'v_lidar' in f.measurements and sample_height >= 0 and len(f.measurements["v_lidar"]) > 0:
+                v_lidar = f.measurements["v_lidar"]
+                a_lidar = f.measurements["a_lidar"]
+
+                v_lidar['mask'] = np.logical_or(v_lidar['mask'], a_lidar['var']<a_thr)
+                a_lidar['mask'] = np.logical_or(a_lidar['mask'], a_lidar['var']<a_thr)
+
+                #find base of liquid layer
+                #print(v_lidar['rg'], v_lidar['rg'].shape)
+                #print(v_lidar['var'], v_lidar['var'].shape)
+                if v_lidar['var'].shape[1] > 1 and v_lidar['var'].shape[0] > 1:
+                    mx_ind = h.argnearest(v_lidar['rg'], sample_height)
+                else:
+                    mx_ind = 0
+                #print(ll_base, mx_ind)
+                #print(len(a_lidar['var']), a_lidar['var'].shape)
+                
+                for it in range(a_lidar['var'].shape[0]):
+                    #index of bsc max above liquid base
+                    idx = np.argmax(fill_with(a_lidar, -99)[it,mx_ind:])
+                    #print(it, idx, mx_ind+idx)
+                    if not v_lidar['mask'][it, mx_ind+idx]:
+                        v_base.append(v_lidar['var'][it, mx_ind+idx])
+                        #print('v', v_lidar['var'][it, mx_ind+idx])
+                        #print('a',a_lidar['var'][it, mx_ind+idx])
+                        # sometimes rg is only a float
+                        if isinstance(v_lidar['rg'], np.ndarray):
+                            rg = v_lidar['rg'][mx_ind+idx]
+                        else:
+                            rg = v_lidar['rg']
+                        locations_of_vel.append((v_lidar['ts'][it], rg, v_lidar['var'][it, mx_ind+idx], f.valid))
+                    #print(v_lidar['ts'][it], v_lidar['rg'][mx_ind+idx])
+                    #if v_lidar['var'].shape[1] > 1:
+                        
+                    #else:
+                        #locations_of_vel.append((v_lidar['ts'][it], v_lidar['rg']))
+
+                
+        v_base=np.array(v_base)
+        v_base=v_base[v_base != 0]
+        v_base=v_base[v_base != None]
+        print('v_base', v_base)
+
+        if len(v_base)>0:
+            v_mean=np.mean(v_base)
+            v_std=np.std(v_base)
+            v_n=len(v_base)
+        else:
+            v_mean=0
+            v_std=0
+            v_n=0
+
+        return v_mean,v_std,v_n,v_base,locations_of_vel
+
+
 
     def velocities(self):
         """refactored
@@ -966,6 +1047,32 @@ class cloud():
         print('cloud top thickness: no tops ', len(self.tops), ' no thickness ',  len(thickness_with_time))
         thickness = [e[1] for e in thickness_with_time]
         return np.average(thickness), np.median(thickness), np.std(thickness), thickness_with_time
+
+
+    def cloud_top_avg(self, frac=0.5):
+        """calculated the mean height of the mid of the liquid layer
+        (based on cloud_top_thickness())
+        
+        Returns:
+            np.average(thickness), np.median(thickness), np.std(thickness), thickness_with_time
+
+        """
+
+        mid_with_time = []
+        for f in self.features:
+
+            print(f.time, f.top_range, f.liquid_layer_base, f.base_range)
+            # 2020-10-12 f.base_range and liquid_layer_base are not equal???
+            #
+
+            if f.liquid_layer_base!=[]:
+                mid = f.liquid_layer_base[0] + frac*(f.top_range-f.liquid_layer_base[0])
+                mid_with_time.append((f.time, mid))
+
+        mids = [e[1] for e in mid_with_time]
+        return np.average(mids), mid_with_time
+
+
 
     def average_paths(self):
     

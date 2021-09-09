@@ -113,7 +113,10 @@ for i in range(len(clouds)):
 
             thickness_vals_s = sorted(thickness_vals, key=lambda k: k[0])
             period_top, autocorr_top = CLS.time_analysis_from_vel(thickness_vals_s, 3)
-            
+            #
+            # ey linkely wrong place
+            # here the CTH_autocorr is calculated
+            #
             #print(autocorr_top)
             if len(autocorr_top[1] > 0):
                 i_above_thres = np.where(autocorr_top[1] > 0.8)[0][-1]
@@ -215,6 +218,18 @@ for i in range(len(clouds)):
             output["v_dl_period_Pxx"] = periodogram[1].tolist()
             output["v_dl_autocor_time"] = autocorr[0].tolist()
             output["v_dl_autocor_coeff"] = autocorr[1].tolist()
+
+            #
+            # now include the fixed height version
+            #
+            mids, mid_with_time = clouds[i].cloud_top_avg()
+            output['v_dl_fix_mean'], output['v_dl_fix_std'], output['v_dl_fix_n'], v_base, vel_locations = clouds[i].velocities_fixed_height()
+            vel_locations_s = sorted(vel_locations, key=lambda k: k[0])
+            periodogram, autocorr = CLS.time_analysis_from_vel(vel_locations_s, 2)
+            output["v_dl_fix_period_f"] = periodogram[0].tolist()
+            output["v_dl_fix_period_Pxx"] = periodogram[1].tolist()
+            output["v_dl_fix_autocor_time"] = autocorr[0].tolist()
+            output["v_dl_fix_autocor_coeff"] = autocorr[1].tolist()
 
             #output["pT_no_node_hist"] = clouds[i].no_node_hist()
             #output["pT_no_node_hist_cb"] = clouds[i].no_node_hist_above_cb()
