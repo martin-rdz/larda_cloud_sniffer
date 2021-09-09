@@ -682,10 +682,10 @@ class cloud():
         return v_mean,v_std,v_n,v_base,locations_of_vel
 
     def no_node_hist(self):
-        """
-
+        """histogram over number of nodes for full cloud
 
         Returns:
+            histogram of the node numbers
         """
 
         no_nodes=np.array([])
@@ -697,6 +697,63 @@ class cloud():
         
         hist, bins = np.histogram(no_nodes, bins=[0,1,3,5,7,9,11,13,15,17,19,21,23])
 
+        return hist.tolist()
+
+    def no_node_hist_above_cb(self):
+        """histogram over number of nodes for full cloud
+
+
+        Returns:
+            histogram of the node numbers
+        """
+
+        no_nodes=np.array([])
+
+        for f in self.features:
+            print(f.liquid_layer_base)
+            if 'pT_no' in f.measurements:
+                rg = f.measurements["pT_no"]['rg']
+                print('pT range', rg)
+                rg_lt_base =  np.where(rg > f.liquid_layer_base[0])[0]
+                i_base = rg_lt_base[0]
+                print(i_base)
+                #print(f.measurements["pT_no"]['var'].shape)
+                #print(f.measurements["pT_no"]['var'][:,i_base:].shape)
+                var = f.measurements["pT_no"]['var'][:,i_base:].ravel()
+                no_nodes = np.append(no_nodes, var, axis=0)
+        
+        hist, bins = np.histogram(no_nodes, bins=[0,1,3,5,7,9,11,13,15,17,19,21,23])
+
+        return hist.tolist()
+
+
+    def no_node_hist_ice_liq(self):
+        """histogram over number of nodes for full cloud
+
+
+        Returns:
+            histogram of the node numbers
+        """
+
+        no_nodes=np.array([])
+
+        for f in self.features:
+            print(f.classifications)
+            print(f.ranges)
+            if 'pT_no' in f.measurements:
+                rg = f.measurements["pT_no"]['rg']
+                print('pT range', rg)
+                lowest_ice = np.where(np.isin(f.classifications, [1,4,5]))[0]
+                print('lowest ice ', lowest_ice)
+                if len(lowest_ice) > 0:
+                    rg_lowest = f.ranges[lowest_ice][0]
+                    rg_lt_base =  np.where(rg > rg_lowest)[0]
+                    i_base = rg_lt_base[0]
+                    print(i_base)
+                    var = f.measurements["pT_no"]['var'][:,i_base:].ravel()
+                    no_nodes = np.append(no_nodes, var, axis=0)
+        
+        hist, bins = np.histogram(no_nodes, bins=[0,1,3,5,7,9,11,13,15,17,19,21,23])
         return hist.tolist()
 
 

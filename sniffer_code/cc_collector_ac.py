@@ -216,8 +216,9 @@ for i in range(len(clouds)):
             output["v_dl_autocor_time"] = autocorr[0].tolist()
             output["v_dl_autocor_coeff"] = autocorr[1].tolist()
 
-            output["pT_no_node_hist"] = clouds[i].no_node_hist()
-        
+            #output["pT_no_node_hist"] = clouds[i].no_node_hist()
+            #output["pT_no_node_hist_cb"] = clouds[i].no_node_hist_above_cb()
+            output["pT_no_node_hist_il"] = clouds[i].no_node_hist_ice_liq()
 
             #manually corrected LDR
             output["LDRcorr_TOP_AVG"], output["LDRcorr_TOP_MED"], output["LDRcorr_TOP_STD"], output["LDRcorr_TOP_N"] = clouds[i].separation_average("LDRcorr", sep)
