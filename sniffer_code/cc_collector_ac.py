@@ -223,7 +223,7 @@ for i in range(len(clouds)):
             # now include the fixed height version
             #
             mids, mid_with_time = clouds[i].cloud_top_avg()
-            output['v_dl_fix_mean'], output['v_dl_fix_std'], output['v_dl_fix_n'], v_base, vel_locations = clouds[i].velocities_fixed_height()
+            output['v_dl_fix_mean'], output['v_dl_fix_std'], output['v_dl_fix_n'], v_base, vel_locations = clouds[i].velocities_fixed_height(mids)
             vel_locations_s = sorted(vel_locations, key=lambda k: k[0])
             periodogram, autocorr = CLS.time_analysis_from_vel(vel_locations_s, 2)
             output["v_dl_fix_period_f"] = periodogram[0].tolist()
