@@ -98,6 +98,7 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
+<<<<<<< HEAD
      inkscape:zoom="0.98994949"
      inkscape:cx="393.71908"
      inkscape:cy="401.39751"
@@ -108,6 +109,18 @@
      inkscape:window-height="1013"
      inkscape:window-x="350"
      inkscape:window-y="1431"
+=======
+     inkscape:zoom="1.4"
+     inkscape:cx="-562.97313"
+     inkscape:cy="577.42364"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1013"
+     inkscape:window-x="-9"
+     inkscape:window-y="1304"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
      inkscape:window-maximized="1"
      showguides="true"
      inkscape:guide-bbox="true">
@@ -126,6 +139,7 @@
        orientation="0,1"
        id="guide4798"
        inkscape:locked="false" />
+<<<<<<< HEAD
     <sodipodi:guide
        position="-92.34162,78.844513"
        orientation="1,0"
@@ -141,6 +155,8 @@
        orientation="0,1"
        id="guide4615"
        inkscape:locked="false" />
+=======
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
   </sodipodi:namedview>
   <metadata
      id="metadata4509">
@@ -163,9 +179,15 @@
        id="rect4634-8-2"
        width="66.316963"
        height="62.500347"
+<<<<<<< HEAD
        x="-99.864655"
        y="15.838445"
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+=======
+       x="-98.668442"
+       y="102.37199"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_wavethresholds_small.png"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <rect
@@ -173,9 +195,15 @@
        id="rect4745-2-7-7"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-98.628082"
        y="23.931721"
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+=======
+       x="-97.43187"
+       y="110.46526"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_wavethresholds_small.png"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <rect
@@ -183,9 +211,15 @@
        id="rect4745-2-8"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-98.628082"
        y="21.030514"
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+=======
+       x="-97.43187"
+       y="107.56406"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_wavethresholds_small.png"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <rect
@@ -193,9 +227,15 @@
        id="rect4745-9"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-98.628082"
        y="18.088474"
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+=======
+       x="-97.43187"
+       y="104.62202"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_wavethresholds_small.png"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <rect
@@ -203,8 +243,13 @@
        id="rect4745-2-7-5"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="136.86644"
        y="22.739727"
+=======
+       x="138.06245"
+       y="109.27327"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -213,8 +258,13 @@
        id="rect4745-2-0"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="136.86644"
        y="19.838558"
+=======
+       x="138.06245"
+       y="106.3721"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -223,8 +273,13 @@
        id="rect4745-1"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="136.86644"
        y="16.896511"
+=======
+       x="138.06245"
+       y="103.43005"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -233,8 +288,13 @@
        id="rect4745-2-7-8"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="70.60495"
        y="22.739735"
+=======
+       x="71.801163"
+       y="109.27328"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -243,8 +303,13 @@
        id="rect4745-2-3"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="70.604958"
        y="19.838566"
+=======
+       x="71.80117"
+       y="106.37211"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -253,8 +318,13 @@
        id="rect4745-6"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="70.60495"
        y="16.896511"
+=======
+       x="71.801163"
+       y="103.43005"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -263,8 +333,13 @@
        id="rect4745-2-7"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="4.2828379"
        y="22.739727"
+=======
+       x="5.4790287"
+       y="109.27327"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_basic.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -273,8 +348,13 @@
        id="rect4745-2"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="4.2828398"
        y="19.838558"
+=======
+       x="5.4790316"
+       y="106.3721"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_basic.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -283,14 +363,20 @@
        id="rect4745"
        width="63.743782"
        height="2.6726942"
+<<<<<<< HEAD
        x="4.2828341"
        y="16.896511"
+=======
+       x="5.4790254"
+       y="103.43005"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_basic.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <image
        sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\comparison_weighted\Lim_Punta_fraction_icecont_profile_hogan_all_small.png"
        xlink:href="Lim_Punta_fraction_icecont_profile_hogan_all_small.png"
+<<<<<<< HEAD
        inkscape:export-ydpi="300"
        inkscape:export-xdpi="300"
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_basic.png"
@@ -336,13 +422,65 @@
        id="image5065-1-3"
        x="-99.157249"
        y="16.896511" />
+=======
+       y="102.26666"
+       x="4.8078513"
+       id="image5065"
+       preserveAspectRatio="none"
+       height="62.13929"
+       width="66.281906"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_basic.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <image
+       sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\comparison_weighted\Lim_Punta_fraction_icecont_profile_uncoupled_small.png"
+       xlink:href="Lim_Punta_fraction_icecont_profile_uncoupled_small.png"
+       y="102.26666"
+       x="137.37166"
+       id="image5076"
+       preserveAspectRatio="none"
+       height="62.13929"
+       width="66.281906"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <image
+       sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\comparison_weighted\Lim_Punta_fraction_icecont_profile_coupled_small.png"
+       xlink:href="Lim_Punta_fraction_icecont_profile_coupled_small.png"
+       y="102.26666"
+       x="71.08976"
+       id="image5087"
+       preserveAspectRatio="none"
+       height="62.13929"
+       width="66.281906"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+    <image
+       sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\comparison_weighted\Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+       xlink:href="Lim_Punta_fraction_icecont_profile_wavethresholds_small.png"
+       y="103.43005"
+       x="-97.961037"
+       id="image5065-1-3"
+       preserveAspectRatio="none"
+       height="62.13929"
+       width="66.281906"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_wavethresholds_small.png"
+       inkscape:export-xdpi="300"
+       inkscape:export-ydpi="300" />
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
     <rect
        style="opacity:1;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#ffffff;stroke-width:0.53280467;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
        id="rect4634-8-2-3"
        width="66.316963"
        height="62.500347"
+<<<<<<< HEAD
        x="-175.16461"
        y="15.704808"
+=======
+       x="-173.9686"
+       y="102.23835"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_notwave_small.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -351,8 +489,13 @@
        id="rect4745-2-7-7-6"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-173.92804"
        y="23.798077"
+=======
+       x="-172.73203"
+       y="110.33162"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_notwave_small.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -361,8 +504,13 @@
        id="rect4745-2-8-9"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-173.92804"
        y="20.896877"
+=======
+       x="-172.73203"
+       y="107.43042"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_notwave_small.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
@@ -371,14 +519,20 @@
        id="rect4745-9-8"
        width="63.743782"
        height="2.672694"
+<<<<<<< HEAD
        x="-173.92804"
        y="17.954861"
+=======
+       x="-172.73203"
+       y="104.4884"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_notwave_small.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300" />
     <image
        sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\comparison_weighted\Lim_Punta_fraction_icecont_profile_nowave_abovecbh_small.png"
        xlink:href="Lim_Punta_fraction_icecont_profile_nowave_abovecbh_small.png"
+<<<<<<< HEAD
        y="16.762867"
        x="-174.4572"
        id="image5065-1-3-2"
@@ -497,6 +651,18 @@
          style="font-size:32px;line-height:110.00000238%">Temperature uncertainty </flowPara><flowPara
          style="font-size:32px;line-height:110.00000238%"
          id="flowPara4762">Monte Carlo sampling</flowPara></flowRoot>  </g>
+=======
+       inkscape:export-ydpi="300"
+       inkscape:export-xdpi="300"
+       inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\Lim_Punta_fraction_icecont_profile_uncoupled_notwave_small.png"
+       width="66.281906"
+       height="62.13929"
+       preserveAspectRatio="none"
+       id="image5065-1-3-2"
+       x="-173.26118"
+       y="103.29641" />
+  </g>
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
   <g
      inkscape:groupmode="layer"
      id="layer2"
@@ -558,7 +724,11 @@
        xml:space="preserve"
        id="flowRoot4494-5-7"
        style="font-style:normal;font-weight:normal;font-size:5.33333349px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+<<<<<<< HEAD
        transform="matrix(0.26458333,0,0,0.26458333,23.622333,-84.562512)"
+=======
+       transform="matrix(0.26458333,0,0,0.26458333,66.471514,2.5001965)"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300"><flowRegion
@@ -569,11 +739,19 @@
            x="228.21428"
            y="426.44824" /></flowRegion><flowPara
          id="flowPara4500-0-00"
+<<<<<<< HEAD
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.66666698px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(a)</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot4494-6-1"
        style="font-style:normal;font-weight:normal;font-size:5.33333349px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none"
        transform="matrix(0.26458333,0,0,0.26458333,90.000057,-84.562512)"
+=======
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(a)</flowPara></flowRoot>    <flowRoot
+       xml:space="preserve"
+       id="flowRoot4494-6-1"
+       style="font-style:normal;font-weight:normal;font-size:5.33333349px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none"
+       transform="matrix(0.26458333,0,0,0.26458333,132.84926,2.5001965)"
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
        inkscape:export-filename="C:\Users\radenz\ownCloud\2020-08-11_paper_layered_cloud_statistics\figures\fraction_binned_height_thres.png"
        inkscape:export-xdpi="300"
        inkscape:export-ydpi="300"><flowRegion
@@ -584,6 +762,7 @@
            x="228.21428"
            y="426.44824" /></flowRegion><flowPara
          id="flowPara4500-5-4"
+<<<<<<< HEAD
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:14.66666698px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(b)</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot4494-5-7-3"
@@ -660,4 +839,7 @@
            y="426.44824" /></flowRegion><flowPara
          id="flowPara4500-0-00-4-6-33"
          style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.33333382px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(e)</flowPara></flowRoot>  </g>
+=======
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(b)</flowPara></flowRoot>  </g>
+>>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
 </svg>
