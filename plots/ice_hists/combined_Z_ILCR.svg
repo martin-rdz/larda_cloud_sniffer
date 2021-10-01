@@ -26,19 +26,19 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.90509668"
-     inkscape:cx="402.98964"
-     inkscape:cy="563.54562"
+     inkscape:zoom="1.28"
+     inkscape:cx="375.72662"
+     inkscape:cy="657.01266"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
-     inkscape:window-width="1704"
-     inkscape:window-height="1065"
-     inkscape:window-x="49"
-     inkscape:window-y="93"
-     inkscape:window-maximized="0">
+     inkscape:window-width="1920"
+     inkscape:window-height="1013"
+     inkscape:window-x="-9"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1">
     <sodipodi:guide
        position="35.012307,206.86662"
        orientation="0,1"
@@ -63,7 +63,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -74,25 +74,25 @@
     <image
        sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\ice_hists\Lim_Punta_Z_full_virga_dB_Z_TOP_values.png"
        xlink:href="Lim_Punta_Z_full_virga_dB_Z_TOP_values.png"
-       inkscape:export-ydpi="350"
-       inkscape:export-xdpi="350"
-       width="83.366425"
-       height="78.156029"
-       preserveAspectRatio="none"
-       id="image4493"
+       y="86.39167"
        x="7.8316722"
-       y="86.39167" />
+       id="image4493"
+       preserveAspectRatio="none"
+       height="78.156029"
+       width="83.366425"
+       inkscape:export-xdpi="350"
+       inkscape:export-ydpi="350" />
     <image
        sodipodi:absref="C:\Users\radenz\dev\larda3\sniffer\plots\ice_hists\Lim_Punta_ILCR_lin_ILCR_values.png"
        xlink:href="Lim_Punta_ILCR_lin_ILCR_values.png"
-       inkscape:export-ydpi="350"
-       inkscape:export-xdpi="350"
-       width="83.255692"
-       height="78.052223"
-       preserveAspectRatio="none"
+       y="86.407608"
+       x="88.609146"
        id="image4504"
-       x="92.313316"
-       y="86.407608" />
+       preserveAspectRatio="none"
+       height="78.052223"
+       width="83.255692"
+       inkscape:export-xdpi="350"
+       inkscape:export-ydpi="350" />
     <flowRoot
        xml:space="preserve"
        id="flowRoot4511"
@@ -107,11 +107,11 @@
            x="95.714287"
            y="340.66159" /></flowRegion><flowPara
          id="flowPara4517"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(a)</flowPara></flowRoot>    <flowRoot
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16.00000052px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(a)</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot4511-1"
        style="font-style:normal;font-weight:normal;font-size:5.33333349px;line-height:100%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none"
-       transform="matrix(0.26458333,0,0,0.26458333,83.971472,2.9338646)"
+       transform="matrix(0.26458333,0,0,0.26458333,80.267303,2.9338646)"
        inkscape:export-xdpi="350"
        inkscape:export-ydpi="350"><flowRegion
          id="flowRegion4513-8"><rect
@@ -121,5 +121,5 @@
            x="95.714287"
            y="340.66159" /></flowRegion><flowPara
          id="flowPara4517-3"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:18.66666603px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(b)</flowPara></flowRoot>  </g>
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:16.00000052px;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold'">(b)</flowPara></flowRoot>  </g>
 </svg>

@@ -89,6 +89,37 @@ def not_wave(cloud, autocorr_thres):
 
     return conds
     
+def not_wave_fixh(cloud, autocorr_thres):
+    """analysis for the fixed height velocity sampling as requested by refereee #2"""
+    ffcloud = lambda s: float(cloud[s])
+
+    conds = standard(cloud)
+    
+    #if 'v_dl_autocor_time' in cloud and len(cloud['v_dl_autocor_time']) != '[nan]':
+    if 'v_dl_fix_autocor_time' in cloud and len(cloud['v_dl_fix_autocor_time']) > 5:
+        v_dl_autocor_time = cloud['v_dl_fix_autocor_time']
+        v_dl_autocor_coeff = cloud['v_dl_fix_autocor_coeff']
+        #print(v_dl_autocor_time[-10:])
+        #print(v_dl_autocor_coeff[-10:])
+        if not v_dl_autocor_time[-1] == ']':
+            v_dl_autocor_time += ']'
+        if not v_dl_autocor_coeff[-1] == ']':
+            v_dl_autocor_coeff += ']'
+
+        vel = max(float(cloud['VEL']),0.1)
+        autocor_time = toarray(v_dl_autocor_time)
+        autocor_coeff = toarray(v_dl_autocor_coeff)
+        autocorr_lt_thres = np.where(autocor_coeff > 0.8)[0]
+        i_above_thres = autocorr_lt_thres[-1] if len(autocorr_lt_thres) > 0 else 0
+        autocorr_at_thres = autocor_time[i_above_thres]*vel if len(autocor_time) > 0 else 9999
+        conds += [autocorr_at_thres < autocorr_thres, "autocorr_at_thres < autocorr_thres"]
+    
+    else:
+        # doppler lidar obs not long enough
+        conds += [False, "v_dl_autocor not in cloud/DL missing"]
+
+    return conds
+    
     
     
 def conditions_ice_w_CTH(cloud):
