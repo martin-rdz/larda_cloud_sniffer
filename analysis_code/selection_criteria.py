@@ -89,7 +89,6 @@ def not_wave(cloud, autocorr_thres):
 
     return conds
     
-<<<<<<< HEAD
 def not_wave_fixh(cloud, autocorr_thres):
     """analysis for the fixed height velocity sampling as requested by refereee #2"""
     ffcloud = lambda s: float(cloud[s])
@@ -121,8 +120,6 @@ def not_wave_fixh(cloud, autocorr_thres):
 
     return conds
     
-=======
->>>>>>> 1dc8e1136ff1155e4caeec4ab5bb33eeb822943a
     
     
 def conditions_ice_w_CTH(cloud):
